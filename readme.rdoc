@@ -1,0 +1,5 @@
+yet another parsec for ruby.
+
+generates simple and flat AST.
+
+ruby1.9 only. (want 1.8 compatible? there's already an rparsec)
