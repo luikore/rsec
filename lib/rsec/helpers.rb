@@ -1,8 +1,62 @@
 # coding: utf-8
 # ------------------------------------------------------------------------------
-# Helpers to make code cleaner
+# Helpers(combinators) to construct parser
 
 module Rsec
+  # these are not callable from a parser
+  module Helpers
+    # --------------------------------------------------------------------------
+    # Unary
+
+    # lazy parser
+    def lazy &p
+      Lazy[p]
+    end
+
+    # dynamic parser
+    def dynamic &p
+      Dynamic[p]
+    end
+
+    # value parser (accept any input, don't advance ctx and return value x)
+    def value x
+      Value[x]
+    end
+
+    # beginning of line parser
+    def bol x=:_skip_
+      Bol[x]
+    end
+
+    # move scan pos n characters<br/>
+    # can be negative
+    def skip_n n
+      SkipN[n]
+    end
+
+    # --------------------------------------------------------------------------
+    # "Zero-nary"
+
+    def space
+      SkipPattern[/\s+/]
+    end
+
+    def spacee
+      SkipPattern[/\s*/]
+    end
+
+    def int
+      Pattern[/[+-]?\d+/]
+    end
+
+    def float
+      Pattern[/[+-]?\d+(\.\d+)?/]
+    end
+  end
+
+  # ----------------------------------------------------------------------------
+  # Binary
+
   # when self failed, use other
   def | other
     other = make_parser other
@@ -27,9 +81,9 @@ module Rsec
   def >> other
     other = make_parser other
     if is_a?(RSeq)
-      RSeq[*self, /\s*/.r.skip, other]
+      RSeq[*self, SkipPattern[/\s*/], other]
     else
-      RSeq[self, /\s*/.r.skip, other]
+      RSeq[self, SkipPattern[/\s*/], other]
     end
   end
 
@@ -47,9 +101,9 @@ module Rsec
   def << other
     other = make_parser other
     if is_a?(LSeq)
-      LSeq[*self, /\s*/.r.skip, other]
+      LSeq[*self, SkipPattern[/\s*/], other]
     else
-      LSeq[self, /\s*/.r.skip, other]
+      LSeq[self, SkipPattern[/\s*/], other]
     end
   end
 
@@ -117,11 +171,12 @@ module Rsec
 
   # to skip node
   def skip
-    if is_a?(Pattern)
-      SkipPattern[some()] # optimize for pattern
-    else
-      Skip[self]
-    end
+    Skip[self]
+  end
+
+  # wraps parse result, then it won't splat
+  def wrap
+    Wrap[self]
   end
 
   # put this in message when parsing failed
@@ -132,29 +187,26 @@ module Rsec
   # ensure x is a parser
   def make_parser x
     return x if x.is_a?(::Rsec)
-    x = x.r if x.respond_to? :r
+    x = x.send(TO_PARSER_METHOD) if x.respond_to?(TO_PARSER_METHOD)
     raise "type mismatch, <#{x}> should be a Rsec" unless x.is_a?(::Rsec)
     x
   end
   private :make_parser
 end
 
+# String#r: convert self to parser
 class String
   # convienient string-to-parser transformer
-  def r
+  define_method ::Rsec::TO_PARSER_METHOD do
     ::Rsec::Pattern[/#{Regexp.escape self}/]
   end
 end
 
+# Regexp#r: convert self to parser
 class Regexp
   # convienient regexp-to-parser transformer
-  def r
+  define_method ::Rsec::TO_PARSER_METHOD do
     ::Rsec::Pattern[self]
   end
-end
-
-# lazy parser
-def lazy &p
-  ::Rsec::Lazy[p]
 end
 

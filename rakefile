@@ -1,0 +1,6 @@
+desc 'test all'
+task :tests do
+  Dir.glob 'test/test_*.rb' do |f|
+    puts `ruby "#{f}"`
+  end
+end

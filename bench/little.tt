@@ -1,0 +1,44 @@
+grammar Arithmetic
+  rule expr
+    left:term right_opt:(op:[\+\-] right:term)* {
+      def value
+        right_opt.elements.inject(left.value) {|acc, plus_and_right|
+          acc.send \
+		    plus_and_right.op.text_value,
+            plus_and_right.right.value
+        }
+      end
+    }
+  end
+  
+  rule term
+    left:factor right_opt:(op:[\*\/] right:factor)* {
+      def value
+        right_opt.elements.inject(left.value) {|acc, mul_and_right|
+          acc.send \
+		    mul_and_right.op.text_value,
+            mul_and_right.right.value
+        }
+      end
+    }
+  end
+
+  rule factor
+    '(' expr ')' {
+      def value
+        expr.value
+      end
+    }
+    /
+    number
+  end
+  
+  rule number
+    [1-9] [0-9]* {
+      def value
+        text_value.to_f
+      end
+    }
+  end
+end
+

@@ -75,7 +75,7 @@ module Rsec
     def initialize token, inter
       @token = token
       @inter = inter
-      # tricky: determine node class with class
+      # tricky: determine node class with reflection
       @node_class = self.is_a?(Ljoin) ? LAssocNode : RAssocNode
     end
 
@@ -97,7 +97,7 @@ module Rsec
           break
         end
 
-        break if save_point == ctx.pos # stop if no advance
+        break if save_point == ctx.pos # stop if no advance, prevent infinite loop
         node.assoc i
         node.assoc t
       end # loop
@@ -119,15 +119,18 @@ module Rsec
   #       see also helpers
   class RepeatRange
     include Rsec
+
     def self.[] base, range
       self.new base, range
     end
+
     def initialize base, range
       @base = base
       @node_class = range.begin > 0 ? LAssocNode : RAssocNode
       @at_least = range.min.abs
       @optional = range.max - @at_least
     end
+
     def _parse ctx
       rp_node = @node_class.new
       @at_least.times do
@@ -147,9 +150,11 @@ module Rsec
   # base for RepeatN and RepeatAtLeastN
   class RepeatXN
     include Rsec
+
     def self.[] base, n
       self.new base, n
     end
+
     def initialize base, n
       raise "type mismatch, <#{n}> should be a Fixnum" unless n.is_a? Fixnum
       @base = base
