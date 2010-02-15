@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "rsec"
-  s.version = "0.0.2"
+  s.version = "0.0.3"
   s.author = "NS"
   s.email = "usurffx@gmail.com"
   s.homepage = "http://wiki.github.com/luikore/rsec"
@@ -12,7 +12,7 @@ Gem::Specification.new do |s|
   s.files = Dir.glob("{rakefile,license.txt,readme.rdoc,lib/**/*.rb,example/*.rb,test/*.rb,bench/*.rb}")
   s.require_paths = ["lib"]
   s.rubygems_version = '1.3.5'
-  # s.has_rdoc = true
+  # s.has_rdoc = false
   s.extra_rdoc_files = ["readme.rdoc"]
 end
 
