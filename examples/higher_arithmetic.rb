@@ -2,22 +2,22 @@ require "rubygems"
 require "rsec"
 include Rsec::Helpers
 
-def parser
+def higher_arithmetic
   calculate = proc do |(p, *ps)|
     ps.each_slice(2).inject(p) do |left, (op, right)|
       left.send op.strip, right
     end
   end
 
-  int    = /[\+\-]?\d+/.r.map &:to_i
+  float  = /[\+\-]?\d+(?:\.\d+)?/.r.map &:to_f
   bra    = '('.r.skip
   ket    = ')'.r.skip
   paren  = (bra << lazy{@expr} << ket).map &:first
-  factor = paren | int
-  term   = factor.join(/\s*[\*\/]\s*/).map &calculate
-  @expr  = term.join(/\s*[\+\-]\s*/).map &calculate
+
+  term4  = paren | float
+  term3  = term4.join(/\s*\*\*\s*/).map &calculate
+  term2  = term3.join(/\s*[\*\/\%]\s*/).map &calculate
+  term1  = term2.join(/\s*[\+\-]\s*/).map &calculate
+  @expr  = term1
 end
 
-str = '1+2-3*4*5/((2*3)+6)-7'
-print str, ' = '
-puts parser.parse '1+2-3*4*5/((2*3)+6)-7' #=> -9

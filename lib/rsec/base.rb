@@ -56,7 +56,8 @@ module Rsec
   class LAssocNode < Array
     def assoc e
       return self if e == :_skip_
-      e.is_a?(LAssocNode) ? concat(e) : push(e)
+      push e
+      # e.is_a?(LAssocNode) ? concat(e) : push(e)
     end
   end
 

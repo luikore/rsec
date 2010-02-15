@@ -1,4 +1,5 @@
-require "#{File.dirname __FILE__}/../lib/rsec"
+require "rubygems"
+require "rsec"
 include Rsec::Helpers
 
 def arithmetic

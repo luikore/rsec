@@ -1,9 +1,9 @@
 # coding: utf-8
 
-$dir = File.dirname(__FILE__)
-require "#{$dir}/../lib/rsec"
-require "test/unit"
+$:.unshift "#{File.dirname(__FILE__)}/../lib"
+require "rsec"
 include Rsec::Helpers
+require "test/unit"
 
 TC = Test::Unit::TestCase
 module Test::Unit::Assertions

@@ -119,6 +119,7 @@ module Rsec
 
   # parses things like "self inter self inter self"<br/>
   # result is left associative<br/>
+  # at least 1 of self appears (doesn't match "" if left doesn't match "", see also ljoin_)<br/>
   # note: it has nothing to do with SQL<br/>
   # hint: think about Array#join <br/>
   def ljoin inter
@@ -127,11 +128,24 @@ module Rsec
   end
   alias join ljoin
 
+  # similar to ljoin, but also matches ""
+  def ljoin_ inter
+    inter = make_parser inter
+    Ljoin_[self, inter]
+  end
+  alias join_ ljoin
+
   # similar to ljoin<br/>
   # result is right associative
   def rjoin inter
     inter = make_parser inter
     Rjoin[self, inter]
+  end
+
+  # similar to ljoin, but also matches ""
+  def rjoin_ inter
+    inter = make_parser inter
+    Rjoin_[self, inter]
   end
 
   # repeat n or in a range<br/>

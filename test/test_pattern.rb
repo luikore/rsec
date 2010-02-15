@@ -28,10 +28,8 @@ class TPattern < TC
   end
 
   def test_skip_until
-    p = /\d\w+\d/.r.skip_until
+    p = /\d\w+\d/.r.until.skip
     ase :_skip_, p.parse("bcd\n3vve4")
     ase nil, p.parse("bcd\n3vve4-")
-    p2 = 'vos'.r.until.skip
-    ase 'vos'.r.skip_until, p2
   end
 end
