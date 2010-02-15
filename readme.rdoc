@@ -1,4 +1,4 @@
-== Yet another parsec (parser combinator) for Ruby. ==
+== Yet another parsec (parser combinator) for Ruby. 
 
 Generates simple and flat AST. (Or just no AST at all)
 
@@ -6,15 +6,15 @@ Sometimes easier and faster than treetop / rex+racc.
 
 It's ruby1.9 only. (Want 1.8 compatible? Check out rparsec. But the implementation of rsec is totally different from rparsec)
 
-== License ==
+== License 
 
 As Ruby's
 
-== Install ==
+== Install 
 
     gem install rsec -s http://gemcutter.org
 
-== Document ==
+== Document 
 
 English Reference
 http://wiki.github.com/luikore/rsec/
@@ -22,16 +22,20 @@ http://wiki.github.com/luikore/rsec/
 Chinese Reference
 http://hllvm.group.javaeye.com/group/topic/17817
 
-== Links ==
+== Links
 
 source code
+
 http://github.com/luikore/rsec/tree/master
 
 rparsec
+
 http://docs.codehaus.org/display/JPARSEC/rparsec+tips
 
 my mail
+
 mailto://usurffx@gmail.com
 
 parsec in haskell
+
 http://www.haskell.org/haskellwiki/Parsec
