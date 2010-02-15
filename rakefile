@@ -4,3 +4,11 @@ task :tests do
     puts `ruby "#{f}"`
   end
 end
+
+desc 'compare performance with treetop'
+task :bench do
+  require "fileutils"
+  FileUtils.cd 'bench'
+  puts `ruby bench.rb`
+end
+

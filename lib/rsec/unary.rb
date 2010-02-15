@@ -22,10 +22,6 @@ module Rsec
     def skip
       SkipPattern[some()]
     end
-
-    def skip_until
-      SkipUntilPattern[some()]
-    end
   end
 
   # returns a value for any input

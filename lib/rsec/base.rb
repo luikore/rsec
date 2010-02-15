@@ -3,7 +3,8 @@
 # Parser Base
 
 module Rsec
-  # global parse, calls _parse<br/>
+  # whole parse<br/>
+  # returns nil if unparsed or not str terminated after parsing
   def parse str, source_name='source'
     ctx = ParseContext.new str, source_name
     ret = _parse ctx
@@ -25,6 +26,16 @@ module Rsec
     end
     ret
   end
+
+  # partly parse the string, returns [parse_result, rest]
+  def partial_parse str, source_name='source'
+    ctx = ParseContext.new str, source_name
+    ret = _parse ctx
+    [ret, ctx.rest]
+  end
+
+  # TODO
+  # continuous parsing
 
   # right assoc node
   # TODO make it c-extension of binary tree

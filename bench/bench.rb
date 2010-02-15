@@ -36,3 +36,11 @@ puts Benchmark.measure {
   }
 }
 
+puts 'treetop calculation only'
+tt_ast = t.parse s
+puts Benchmark.measure {
+  1000.times {
+    tt_ast.value
+  }
+}
+

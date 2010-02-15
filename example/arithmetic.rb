@@ -1,5 +1,6 @@
 require "rubygems"
 require "rsec"
+include Rsec::Helpers
 
 def parser
   calculate = proc do |(p, *ps)|

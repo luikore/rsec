@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.description = "yet another parsec implementation for ruby"
   s.required_ruby_version = ">=1.9.0"
 
-  s.files = Dir.glob("{license.txt,readme.rdoc,lib/**/*.rb,example/*.rb}")
+  s.files = Dir.glob("{rakefile,license.txt,readme.rdoc,lib/**/*.rb,example/*.rb,test/*.rb,bench/*.rb}")
   s.require_paths = ["lib"]
   s.rubygems_version = '1.3.5'
   # s.has_rdoc = true

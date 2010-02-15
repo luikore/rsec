@@ -112,7 +112,7 @@ module Rsec
     Map[self, p]
   end
 
-  # trigger when parsed
+  # trigger(call the given block) when parsed
   def on &p
     On[self, p]
   end
@@ -120,10 +120,7 @@ module Rsec
   # parses things like "self inter self inter self"<br/>
   # result is left associative<br/>
   # note: it has nothing to do with SQL<br/>
-  # hint 1: think about Array#join <br/>
-  # hint 2: you'd better not return :_skip_ in map for left or right,
-  # then the array is unified and easier to deal with.
-  # there's no problem to return :_skip_ if you are clear what it is doing.
+  # hint: think about Array#join <br/>
   def ljoin inter
     inter = make_parser inter
     Ljoin[self, inter]
