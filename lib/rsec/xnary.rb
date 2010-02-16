@@ -35,6 +35,7 @@ module Rsec
         return res if res
         ctx.pos = save_point
       end
+      nil
     end
   end # class
 end

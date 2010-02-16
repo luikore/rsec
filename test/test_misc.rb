@@ -1,8 +1,8 @@
 require "#{File.dirname(__FILE__)}/helpers"
 
 class TMisc < TC
-  def test_wrap
-    p = 'a'.r < ('b'.r < 'c').wrap < 'd'
+  def test_cache
+    p = 'a'.r < ('b'.r < 'c').cached < 'd'
     ase ['a',['b','c'],'d'], p.parse('abcd')
   end
   

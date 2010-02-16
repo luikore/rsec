@@ -38,19 +38,6 @@ module Rsec
     end
   end
 
-  # wrap LAssocNode only <br/>
-  # note: wraps [] results only
-  class Wrap < Unary
-    def _parse ctx
-      res = some()._parse(ctx)
-      if res.is_a?(LAssocNode)
-        Array[*res]
-      else
-        res
-      end
-    end
-  end
-
   # skip parser<br/>
   # optimize for pattern
   class SkipPattern < Unary
@@ -112,6 +99,14 @@ module Rsec
     def _parse ctx
       @some ||= some()[]
       @some._parse ctx
+    end
+  end
+  
+  # parse result is cached in ctx.
+  # may improve performance
+  class Cached < Unary
+    def _parse ctx
+      ctx.cache[self] ||= some()._parse(ctx)
     end
   end
 end

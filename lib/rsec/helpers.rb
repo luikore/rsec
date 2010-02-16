@@ -185,9 +185,9 @@ module Rsec
     Skip[self]
   end
 
-  # wraps parse result, then it won't splat
-  def wrap
-    Wrap[self]
+  # return a parser that caches parse result, may optimize performance
+  def cached
+    Cached[self]
   end
 
   # put this in message when parsing failed

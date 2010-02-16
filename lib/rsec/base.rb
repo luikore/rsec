@@ -72,6 +72,7 @@ module Rsec
   #   [R]  column: current position in line
   #   [R]  line: current line number
   #   [R]  current_line_text: current line text
+  #   [R]  cache: returns cache of current position
   # </pre>
   class ParseContext < StringScanner
     attr_reader :source
@@ -79,6 +80,16 @@ module Rsec
     def initialize str, source
       super(str)
       @source = source
+      @cache = {}
+    end
+    
+    # supports parsing cache, see also Cached
+    def cache
+      @cache[pos] ||= {}
+    end
+    
+    def clear_cache
+      @cache.clear
     end
 
     def line
