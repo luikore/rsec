@@ -174,7 +174,7 @@ module Rsec
     def _parse ctx
       @n.times.inject(@node_class.new) do |rp_node|
         res = @base._parse ctx
-        return nil unless res
+        return unless res
         rp_node.assoc res
       end
     end
@@ -187,7 +187,7 @@ module Rsec
       rp_node = @node_class.new
       @n.times do
         res = @base._parse(ctx)
-        return nil unless res
+        return unless res
         rp_node.assoc res
       end
       # note this may be an infinite action
