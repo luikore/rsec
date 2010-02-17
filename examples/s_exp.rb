@@ -10,7 +10,7 @@ def s_exp
   ket = ')'.r.skip
   paren =  (bra << (lazy{@exp} | thing) << ket).map(&:first) | thing
 
-  @exp = (   id < space < paren.join_(space)   ).map{|n| n.flatten 1}
+  @exp = (   id < space < paren.join(space)._?   ).map{|n| n.flatten 1}
   (bra << @exp << ket).map(&:first)
 end
 

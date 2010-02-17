@@ -1,3 +1,7 @@
+# Compare performance between rsec and treetop
+# NOTE simple parser doesn't require much backtracking, so treetop's caching is sure to fail.
+#      Next step is to compare really complex parsers.
+
 # string to be parsed
 s = '(3+24/5)/10-3*4+((82321+12-3)-3*4+(82321+12-3))/5'
 

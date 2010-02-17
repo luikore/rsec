@@ -18,8 +18,8 @@ class Scheme
     atom    = boolean | integer | id
     list    = nil # declare for lazy
     cell    = atom | lazy{list}
-    list    = (   bra < cell.join_(spacee) < ket   ).map {|(n)| ListNode[*n] }
-    @parser = (spacee < cell.join_(spacee) < spacee).map {|(n)| ListNode[*n] }
+    list    = (   bra < cell.join(spacee)._? < ket   ).map {|(n)| ListNode[*n] }
+    @parser = (spacee < cell.join(spacee)._? < spacee).map {|(n)| ListNode[*n] }
   end
       
   def run source

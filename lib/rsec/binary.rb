@@ -77,23 +77,16 @@ module Rsec
       @inter = inter
       # tricky: determine node class and default return with reflection
       @node_class = \
-        if is_a?(Ljoin) or is_a?(Ljoin_)
+        if is_a?(Ljoin)
           LAssocNode
         else
           RAssocNode
-        end
-      # note the underlines
-      @default_ret = \
-        if is_a?(Ljoin_)
-          LAssocNode[]
-        elsif is_a?(Rjoin_)
-          RAssocNode[]
         end
     end
 
     def _parse ctx
       e = @token._parse ctx
-      return @default_ret unless e
+      return unless e
       node = @node_class[e]
       loop do
         save_point = ctx.pos
@@ -124,9 +117,6 @@ module Rsec
   # token joined by inter<br/>
   # result is right associative
   class Rjoin < Xjoin; end
-
-  class Ljoin_ < Xjoin; end
-  class Rjoin_ < Xjoin; end
 
   # repeat from range.begin.abs to range.end.abs <br/>
   # if the range starts with a negative number, then result is right associative<br/>
