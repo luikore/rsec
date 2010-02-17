@@ -7,6 +7,8 @@ module Rsec
     include ::Rsec
   end
 
+  # sequence combinator<br/>
+  # result in an array (LAssocNode)
   class LSeq < Xnary
     def _parse ctx
       inject(LAssocNode.new) do |s_node, e|
@@ -17,6 +19,8 @@ module Rsec
     end
   end
 
+  # sequence combinator<br/>
+  # result in an array (RAssocNode)
   class RSeq < Xnary
     def _parse ctx
       inject(RAssocNode.new) do |s_node, e|
@@ -27,6 +31,8 @@ module Rsec
     end
   end
 
+  # or combinator<br/>
+  # result in on of the members, or nil
   class Or < Xnary
     def _parse ctx
       save_point = ctx.pos
@@ -35,7 +41,7 @@ module Rsec
         return res if res
         ctx.pos = save_point
       end
-      nil
+      nil # don't forget to fail it when none of the elements matches
     end
   end # class
 end

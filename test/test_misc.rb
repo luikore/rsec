@@ -26,8 +26,10 @@ class TMisc < TC
   end
   
   def test_maybe
-    p = ('v'.r < 'q')._?
-    ase :_skip_, p.parse('')
-    ase ['v', 'q'], p.parse('vq')
+    [:_? , :maybe].each do |m|
+      p = ('v'.r < 'q').send m
+      ase :_skip_, p.parse('')
+      ase ['v', 'q'], p.parse('vq')
+    end
   end
 end

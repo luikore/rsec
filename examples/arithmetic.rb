@@ -1,5 +1,7 @@
-require "rubygems"
+# arithmetic parser
+
 require "rsec"
+
 include Rsec::Helpers
 
 def arithmetic
@@ -12,9 +14,9 @@ def arithmetic
   num    = /[+-]?[1-9]\d*(\.\d+)?/.r.map &:to_f
   bra    = '('.r.skip
   ket    = ')'.r.skip
-  paren  = (bra << lazy{@expr} << ket).map &:first
+  expr   = nil # declare for lazy
+  paren  = (bra << lazy{expr} << ket).map &:first
   factor = paren | num
   term   = factor.join(/\s*[\*\/]\s*/).map &calculate
-  @expr  = term.join(/\s*[\+\-]\s*/).map &calculate
+  expr  = term.join(/\s*[\+\-]\s*/).map &calculate
 end
-

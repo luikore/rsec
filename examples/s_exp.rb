@@ -1,4 +1,7 @@
+# s-expression parser
+
 require "rsec"
+
 include Rsec::Helpers
 
 def s_exp
@@ -8,9 +11,10 @@ def s_exp
 
   bra = '('.r.skip
   ket = ')'.r.skip
-  paren =  (bra << (lazy{@exp} | thing) << ket).map(&:first) | thing
+  exp = nil
+  paren =  (bra << (lazy{exp} | thing) << ket).map(&:first) | thing
 
-  @exp = (   id < space < paren.join(space)._?   ).map{|n| n.flatten 1}
-  (bra << @exp << ket).map(&:first)
+  exp = (   id < space < paren.join(space)._?   ).map{|n| n.flatten 1}
+  (bra << exp << ket).map(&:first)
 end
 
