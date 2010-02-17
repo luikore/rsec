@@ -179,7 +179,14 @@ module Rsec
     other = make_parser other
     NegativeLookAhead[self, other]
   end
-
+  
+  # maybe parser<br/>
+  # appears 0 or 1 times, result is not wrapped in an array
+  def maybe
+    Maybe[self]
+  end
+  alias _? maybe
+  
   # to skip node
   def skip
     Skip[self]

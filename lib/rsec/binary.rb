@@ -141,7 +141,7 @@ module Rsec
 
     def initialize base, range
       @base = base
-      @node_class = range.begin > 0 ? LAssocNode : RAssocNode
+      @node_class = range.begin >= 0 ? LAssocNode : RAssocNode
       @at_least = range.min.abs
       @optional = range.max - @at_least
     end
@@ -173,7 +173,7 @@ module Rsec
     def initialize base, n
       raise "type mismatch, <#{n}> should be a Fixnum" unless n.is_a? Fixnum
       @base = base
-      @node_class = n > 0 ? LAssocNode : RAssocNode
+      @node_class = n >= 0 ? LAssocNode : RAssocNode
       @n = n.abs
     end
   end

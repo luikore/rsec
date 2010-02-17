@@ -37,6 +37,19 @@ module Rsec
       ctx.bol ? some() : nil
     end
   end
+  
+  # matches 0 or 1 appearence
+  class Maybe < Unary
+    def _parse ctx
+      pos = ctx.pos
+      if res = some()._parse(ctx)
+        res
+      else
+        ctx.pos = pos
+        :_skip_
+      end
+    end
+  end
 
   # skip parser<br/>
   # optimize for pattern

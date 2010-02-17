@@ -24,4 +24,10 @@ class TMisc < TC
   rescue => e
     assert(e.to_s.index('omg!') >= 0)
   end
+  
+  def test_maybe
+    p = ('v'.r < 'q')._?
+    ase :_skip_, p.parse('')
+    ase ['v', 'q'], p.parse('vq')
+  end
 end

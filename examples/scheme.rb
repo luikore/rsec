@@ -1,6 +1,6 @@
 # A simple scheme interpreter
 
-require "#{File.dirname(__FILE__)}/../lib/rsec"
+require "rsec"
 
 class Scheme
   include Rsec::Helpers
@@ -28,27 +28,13 @@ class Scheme
     if !res or !@ctx.eos?
       raise Rsec::ParseError['syntax error', @ctx]
     end
-
-    # show AST
-    require "pp"
-    pp res
-
-    rt = Runtime.new
-    res.eval rt
-  rescue Exception => e
-    puts e, e.backtrace
+    res.eval Runtime.new
   end
   
   ValueNode = Struct.new :val
   class ValueNode
     def eval *xs
       val
-    end
-    def inspect
-      val.inspect
-    end
-    def to_s
-      val.to_s
     end
     def pretty_print q
       q.text "<#{val}>"
@@ -64,8 +50,6 @@ class Scheme
         pr.is_a?(Proc) ? pr[bind, tail] : pr
       when ListNode
         map{|n| n.eval bind }.last
-      when ValueNode
-        raise 'invalid list' # TODO -- an array ?
       end
     end
   end
@@ -103,11 +87,13 @@ class Scheme
         end
       end
       
-      # (lambda (xs[0] xs[1]) body)
+      # declare:
+      #   (lambda (xs[0] xs[1]) body)
       self['lambda'] = proc do |bind_def, (xs, body)|
         xs = [xs] if xs.is_a?(String)
         new_bind = Bind.new bind_def
-        # (some vs[0] vs[1])
+        # calling:
+        #   (some vs[0] vs[1])
         proc do |bind_call, vs|
           vs = vs.map{|v| v.eval bind_call}
           new_bind.merge! Hash[xs.zip vs]
@@ -115,16 +101,16 @@ class Scheme
         end
       end
       
+      # lazy (short cut)
       self['if'] = proc do |bind, (p, left, right)|
         p.eval(bind) ? left.eval(bind) : right.eval(bind)
       end
       
-      %w|+ - * / ** %|.each do |s|
+      # misc
+      %w|+ - * / ** % > <|.each do |s|
         define s, &s.to_sym
       end
-
       define '=', &:==
-      
       define 'display' do |x|
         puts x
       end
