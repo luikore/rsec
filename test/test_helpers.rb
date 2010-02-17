@@ -35,4 +35,22 @@ class THelpers < TC
     ase 5, p.parse('')
     ase nil, p.parse('a')
   end
+  
+  def test_spaces
+    ase nil, space.parse('')
+    ase :_skip_, space.parse(" \t")
+    ase :_skip_, space.parse("\r\n   \t ")
+    
+    ase :_skip_, spacee.parse('')
+    ase :_skip_, spacee.parse("\t ")
+    ase :_skip_, spacee.parse("\r \n")
+
+    ase nil, nb_space.parse('')
+    ase :_skip_, nb_space.parse("\t ")
+    ase nil, nb_space.parse("\r \n")
+    
+    ase :_skip_, nb_spacee.parse('')
+    ase :_skip_, nb_spacee.parse("\t ")
+    ase nil, nb_spacee.parse("\r \n")
+  end
 end

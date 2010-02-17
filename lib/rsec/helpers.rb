@@ -29,7 +29,7 @@ module Rsec
     end
 
     # move scan pos n characters<br/>
-    # can be negative
+    # n can be negative
     def skip_n n
       SkipN[n]
     end
@@ -37,20 +37,26 @@ module Rsec
     # --------------------------------------------------------------------------
     # "Zero-nary"
 
+    # matches 1 or more space chars<br/>
+    # note: ' ', "\n", "\r", "\t"
     def space
       SkipPattern[/\s+/]
     end
 
+    # matches 0 or more space chars<br/>
     def spacee
       SkipPattern[/\s*/]
     end
 
-    def int
-      Pattern[/[+-]?\d+/]
+    # matches 1 or more non-line-break space chars<br/>
+    # note: ' ', "\t"
+    def nb_space
+      SkipPattern[/[\ \t]+/]
     end
-
-    def float
-      Pattern[/[+-]?\d+(\.\d+)?/]
+    
+    # matches 0 or more non-line-break space chars<br/>
+    def nb_spacee
+      SkipPattern[/[\ \t]*/]
     end
   end
 
