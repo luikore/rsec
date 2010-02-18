@@ -17,6 +17,32 @@ module Rsec
         s_node.assoc res
       end
     end
+    
+    def [] idx
+      raise 'index out of range' if idx >= size() or idx < 0
+      SeqOne.new self, idx
+    end
+  end
+  
+  # sequence combinator<br/>
+  # the result is the result of the parser at idx
+  class SeqOne
+    include ::Rsec
+    
+    def initialize parsers, idx
+      @idx = idx
+      @parsers = parsers
+    end
+    
+    def _parse ctx
+      ret = nil
+      @parsers.each_with_index do |p, idx|
+        res = p._parse ctx
+        return unless res
+        ret = res if idx == @idx
+      end
+      ret
+    end
   end
 
   # sequence combinator<br/>
@@ -28,6 +54,11 @@ module Rsec
         return nil unless res
         s_node.assoc res
       end
+    end
+    
+    def [] idx
+      raise 'index out of range' if idx >= size() or idx < 0
+      SeqOne.new self, idx
     end
   end
 

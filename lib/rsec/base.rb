@@ -3,14 +3,11 @@
 # Parser Base
 
 module Rsec
-  # whole parse<br/>
-  # returns nil if unparsed or not str terminated after parsing
+  # parses string<br/>
+  # returns nil if unparsed
   def parse str, source_name='source'
     ctx = ParseContext.new str, source_name
-    ret = _parse ctx
-    if ctx.eos?
-      ret
-    end
+    _parse ctx
   end
 
   # almost the same as parse<br/>
@@ -21,24 +18,13 @@ module Rsec
     unless ret
       raise ParseError[ctx.err || 'syntax error', ctx]
     end
-    unless ctx.eos?
-      raise ParseError['parse terminated before end of input', ctx]
-    end
     ret
-  end
-
-  # partly parse the string, returns [parse_result, rest]
-  def partial_parse str, source_name='source'
-    ctx = ParseContext.new str, source_name
-    ret = _parse ctx
-    [ret, ctx.rest]
   end
 
   # TODO
   # continuous parsing
 
   # right assoc node
-  # TODO make it c-extension of binary tree
   class RAssocNode < Array
     def assoc e
       return self if e == :_skip_

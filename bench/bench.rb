@@ -6,10 +6,9 @@
 s = '(3+24/5)/10-3*4+((82321+12-3)-3*4+(82321+12-3))/5'
 
 # rsec
+$:.unshift "#{File.dirname(__FILE__)}/../lib"
 require "#{File.dirname(__FILE__)}/../examples/arithmetic"
-require "#{File.dirname(__FILE__)}/../examples/higher_arithmetic"
 p = arithmetic()
-p2 = higher_arithmetic()
 
 # treetop
 require "treetop"
@@ -20,7 +19,7 @@ require "benchmark"
 
 # ------------------------------------------------------------------------------
 
-print 'rsec result:'
+print 'rsec result:', "\t"
 puts p.parse! s
 puts((Benchmark.measure{
   1000.times {
@@ -28,15 +27,7 @@ puts((Benchmark.measure{
   }
 }), '')
 
-print 'rsec(with a cache) result:'
-puts p2.parse! s
-puts((Benchmark.measure{
-  1000.times {
-    p2.parse! s
-  }
-}), '')
-
-print 'treetop result:'
+print 'treetop result:', "\t"
 puts t.parse(s).value
 puts((Benchmark.measure {
   1000.times {

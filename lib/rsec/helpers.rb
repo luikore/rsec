@@ -24,39 +24,14 @@ module Rsec
     end
 
     # beginning of line parser
-    def bol x=:_skip_
-      Bol[x]
+    def bol default_return=:_skip_
+      Bol[default_return]
     end
-
+    
     # move scan pos n characters<br/>
     # n can be negative
     def skip_n n
       SkipN[n]
-    end
-
-    # --------------------------------------------------------------------------
-    # "Zero-nary"
-
-    # matches 1 or more space chars<br/>
-    # note: ' ', "\n", "\r", "\t"
-    def space
-      SkipPattern[/\s+/]
-    end
-
-    # matches 0 or more space chars<br/>
-    def spacee
-      SkipPattern[/\s*/]
-    end
-
-    # matches 1 or more non-line-break space chars<br/>
-    # note: ' ', "\t"
-    def nb_space
-      SkipPattern[/[\ \t]+/]
-    end
-    
-    # matches 0 or more non-line-break space chars<br/>
-    def nb_spacee
-      SkipPattern[/[\ \t]*/]
     end
   end
 
@@ -172,7 +147,15 @@ module Rsec
     other = make_parser other
     NegativeLookAhead[self, other]
   end
-  
+
+  # ----------------------------------------------------------------------------
+  # Unary
+
+  # should be eof after parse
+  def eof
+    Eof[self]
+  end
+
   # maybe parser<br/>
   # appears 0 or 1 times, result is not wrapped in an array
   def maybe

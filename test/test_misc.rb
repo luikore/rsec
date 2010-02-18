@@ -20,9 +20,9 @@ class TMisc < TC
   
   def test_fail
     p = 'v'.r.fail 'omg!'
-    p.parse! 'u'
+    p.eof.parse! 'u'
   rescue => e
-    assert(e.to_s.index('omg!') >= 0)
+    assert e.to_s.index 'omg!'
   end
   
   def test_maybe

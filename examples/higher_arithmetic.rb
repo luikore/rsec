@@ -12,15 +12,16 @@ def higher_arithmetic
   end
 
   float  = /[\+\-]?\d+(?:\.\d+)?/.r.map(&:to_f)
-  bra    = '('.r.skip
-  ket    = ')'.r.skip
+  bra    = /\(\s*/.r.skip
+  ket    = /\s*\)/.r.skip
   expr   = nil # declare for lazy
-  paren  = (bra << lazy{expr} << ket).map(&:first)
+  paren  = (bra < lazy{expr} < ket)[1]
 
   term4  = float | paren
   term3  = term4.join(/\s*\*\*\s*/).map &calculate
   term2  = term3.join(/\s*[\*\/\%]\s*/).map &calculate
   term1  = term2.join(/\s*[\+\-]\s*/).map &calculate
   expr   = term1
+  expr.eof
 end
 

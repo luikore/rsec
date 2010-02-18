@@ -38,6 +38,14 @@ module Rsec
     end
   end
   
+  # should be end-of-file after parsing
+  class Eof < Unary
+    def _parse ctx
+      ret = some()._parse ctx
+      ctx.eos? ? ret : nil
+    end
+  end
+  
   # matches 0 or 1 appearence
   class Maybe < Unary
     def _parse ctx

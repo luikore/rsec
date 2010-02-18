@@ -5,14 +5,16 @@ class TPattern < TC
     p1 = 'abc'.r
     ase /abc/.r, p1
     asp 'abc', p1
+    
     asr do
-      p1.parse! 'abcd'
+      p1.eof.parse! 'abcd'
     end
-    ase nil, p1.parse('abcd')
+    ase nil, p1.eof.parse('abcd')
+    
     asr do 
-      p1.parse! 'xabc'
+      p1.eof.parse! 'xabc'
     end
-    ase nil, p1.parse('xabc')
+    ase nil, p1.eof.parse('xabc')
   end
 
   def test_skip
@@ -30,6 +32,6 @@ class TPattern < TC
   def test_skip_until
     p = /\d\w+\d/.r.until.skip
     ase :_skip_, p.parse("bcd\n3vve4")
-    ase nil, p.parse("bcd\n3vve4-")
+    ase nil, p.eof.parse("bcd\n3vve4-")
   end
 end

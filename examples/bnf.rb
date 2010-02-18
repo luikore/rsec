@@ -6,14 +6,16 @@ require "rsec"
 include Rsec::Helpers
 
 def bnf
+  opt_space = /[\ \t]*/.r.skip
+  spacee    = /\s*/.r.skip # include \n
   literal   = /".*?"|'.*?'/.r
   rule_name = /\<.*?\>/.r 
   term      = literal | rule_name
-  list      = term.join nb_spacee
-  _or       = (nb_spacee < '|' < nb_spacee).map &:first
+  list      = term.join opt_space
+  _or       = (opt_space < '|' < opt_space).map &:first
   expr      = list.join _or
-  rule      = spacee < rule_name < nb_spacee < '::=' < nb_spacee < expr < spacee
-  rule ** 1
+  rule      = spacee < rule_name < opt_space < '::=' < opt_space < expr < spacee
+  (rule ** 1).eof
 end
 
 require "pp"
