@@ -117,9 +117,32 @@ module Rsec
   
   # parse result is cached in ctx.
   # may improve performance
-  class Cached < Unary
+  class Cached
+    include ::Rsec
+    
+    def self.[] parser
+      self.new parser
+    end
+    
+    def initialize parser
+      @parser = parser
+      @salt = object_id() << 32
+    end
+    
     def _parse ctx
-      ctx.cache[self] ||= some()._parse(ctx)
+      key = ctx.pos | @salt
+      cache = ctx.cache
+      # result maybe nil, so don't use ||=
+      if cache.has_key? key
+        ret, pos = cache[key]
+        ctx.pos = pos
+        ret
+      else
+        ret = @parser._parse ctx
+        pos = ctx.pos
+        cache[key] = [ret, pos]
+        ret
+      end
     end
   end
 end

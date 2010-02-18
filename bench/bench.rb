@@ -7,7 +7,9 @@ s = '(3+24/5)/10-3*4+((82321+12-3)-3*4+(82321+12-3))/5'
 
 # rsec
 require "#{File.dirname(__FILE__)}/../examples/arithmetic"
+require "#{File.dirname(__FILE__)}/../examples/higher_arithmetic"
 p = arithmetic()
+p2 = higher_arithmetic()
 
 # treetop
 require "treetop"
@@ -23,6 +25,14 @@ puts p.parse! s
 puts((Benchmark.measure{
   1000.times {
     p.parse! s
+  }
+}), '')
+
+print 'rsec(with a cache) result:'
+puts p2.parse! s
+puts((Benchmark.measure{
+  1000.times {
+    p2.parse! s
   }
 }), '')
 

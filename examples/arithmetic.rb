@@ -16,7 +16,7 @@ def arithmetic
   ket    = ')'.r.skip
   expr   = nil # declare for lazy
   paren  = (bra << lazy{expr} << ket).map &:first
-  factor = paren | num
+  factor = num | paren
   term   = factor.join(/\s*[\*\/]\s*/).map &calculate
   expr  = term.join(/\s*[\+\-]\s*/).map &calculate
 end

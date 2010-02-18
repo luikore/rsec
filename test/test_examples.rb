@@ -14,9 +14,9 @@ class TExamples < TC
   
   def test_arithmetic
     s = '1+(2- (3+ 4))/5 * 2*4 +1'
-    ase eval(s), @a.parse(s)
+    ase eval(s), @a.parse!(s)
     s = '1+(2- (3+ 4))/5 * 2**4 +1'
-    ase eval(s), @ha.parse(s)
+    ase eval(s), @ha.parse!(s)
   end
   
   def test_s_exp
