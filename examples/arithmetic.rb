@@ -7,7 +7,7 @@ include Rsec::Helpers
 def arithmetic
   calculate = proc do |(p, *ps)|
     ps.each_slice(2).inject(p) do |left, (op, right)|
-      left.send op.strip, right
+      left.send op, right
     end
   end
 
@@ -15,9 +15,9 @@ def arithmetic
   bra    = /\(\s*/.r.skip
   ket    = /\s*\)/.r.skip
   expr   = nil # declare for lazy
-  paren  = (bra < lazy{expr} < ket)[1]
+  paren  = bra >> lazy{expr} << ket
   factor = num | paren
-  term   = factor.join(/\s*[\*\/]\s*/).map &calculate
-  expr   = term.join(/\s*[\+\-]\s*/).map &calculate
+  term   = factor.join(/[\*\/]/, /\s*/).map &calculate
+  expr   = term.join(/[\+\-]/, /\s*/).map &calculate
   expr.eof
 end

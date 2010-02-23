@@ -24,29 +24,6 @@ module Rsec
   # TODO
   # continuous parsing
 
-  # right assoc node
-  class RAssocNode < Array
-    def assoc e
-      return self if e == :_skip_
-      if size() < 2
-        @last_ary = self # save push position
-        return push(e)
-      end
-      @last_ary[-1] = RAssocNode[@last_ary[-1], e]
-      @last_ary = @last_ary[-1]
-      self
-    end
-  end
-
-  # left assoc node
-  class LAssocNode < Array
-    def assoc e
-      return self if e == :_skip_
-      push e
-      # e.is_a?(LAssocNode) ? concat(e) : push(e)
-    end
-  end
-
   # parse context inherits from StringScanner<br/>
   # <br/>
   # attributes:<br/>

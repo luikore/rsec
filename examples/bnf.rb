@@ -1,7 +1,7 @@
 # BNF grammar parser
 # http://en.wikipedia.org/wiki/Backus-Naur_form
 
-require "rsec"
+require "../lib/rsec"
 
 include Rsec::Helpers
 
@@ -12,9 +12,8 @@ def bnf
   rule_name = /\<.*?\>/.r 
   term      = literal | rule_name
   list      = term.join opt_space
-  _or       = (opt_space < '|' < opt_space).map &:first
-  expr      = list.join _or
-  rule      = spacee < rule_name < opt_space < '::=' < opt_space < expr < spacee
+  expr      = list.join(opt_space >> '|' << opt_space)
+  rule      = [spacee, rule_name, '::=', expr, spacee].r(skip: opt_space)
   (rule ** 1).eof
 end
 

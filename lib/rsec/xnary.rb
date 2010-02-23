@@ -3,68 +3,104 @@
 # x-nary combinators
 
 module Rsec
-  class Xnary < Array
+
+  class Seq < Array
     include ::Rsec
+
+    def _parse ctx
+      ret = []
+      each do |e|
+        res = e._parse ctx
+        return unless res
+        ret << res if res != :_skip_
+      end
+      ret
+    end
+
+    def [] idx
+      raise 'index out of range' if idx >= size() or idx < 0
+      s1 = SeqOne[*self]
+      s1.idx = idx
+      s1
+    end
   end
 
   # sequence combinator<br/>
-  # result in an array (LAssocNode)
-  class LSeq < Xnary
+  # result in an array
+  class SeqInnerSkip < Array
+    include ::Rsec
+    attr_accessor :inner_skip
+
     def _parse ctx
-      inject(LAssocNode.new) do |s_node, e|
+      ret = []
+      skipper = nil
+      each do |e|
+        if skipper
+          return unless skipper._parse ctx
+        end
         res = e._parse ctx
-        return nil unless res
-        s_node.assoc res
+        return unless res
+        ret << res if res != :_skip_
+        skipper = @inner_skip
       end
+      ret
     end
-    
+
     def [] idx
       raise 'index out of range' if idx >= size() or idx < 0
-      SeqOne.new self, idx
+      s1 = SeqOneInnerSkip[*self]
+      s1.idx = idx
+      s1.inner_skip = @inner_skip if @inner_skip
+      s1
     end
   end
   
   # sequence combinator<br/>
   # the result is the result of the parser at idx
-  class SeqOne
+  class SeqOne < Array
     include ::Rsec
-    
-    def initialize parsers, idx
-      @idx = idx
-      @parsers = parsers
-    end
-    
+    attr_accessor :idx
+
     def _parse ctx
       ret = nil
-      @parsers.each_with_index do |p, idx|
+      counter = 0
+      each do |p|
         res = p._parse ctx
         return unless res
-        ret = res if idx == @idx
+        ret ||= res if counter == @idx and res != :_skip_
+        counter += 1 if res != :_skip_
       end
       ret
     end
   end
 
-  # sequence combinator<br/>
-  # result in an array (RAssocNode)
-  class RSeq < Xnary
+  class SeqOneInnerSkip < Array
+    include ::Rsec
+    attr_accessor :inner_skip, :idx
+
     def _parse ctx
-      inject(RAssocNode.new) do |s_node, e|
-        res = e._parse ctx
-        return nil unless res
-        s_node.assoc res
+      ret = nil
+      counter = 0
+      skipper = nil
+      each do |p|
+        if skipper
+          return unless skipper._parse ctx
+        end
+        res = p._parse ctx
+        return unless res
+        ret ||= res if counter == @idx and res != :_skip_
+        counter += 1 if res != :_skip_
+        skipper = @inner_skip
       end
-    end
-    
-    def [] idx
-      raise 'index out of range' if idx >= size() or idx < 0
-      SeqOne.new self, idx
+      ret
     end
   end
 
   # or combinator<br/>
   # result in on of the members, or nil
-  class Or < Xnary
+  class Or < Array
+    include ::Rsec
+
     def _parse ctx
       save_point = ctx.pos
       each do |e|

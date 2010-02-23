@@ -7,7 +7,7 @@ module Rsec
   module Helpers
     # --------------------------------------------------------------------------
     # Unary
-
+    
     # lazy parser
     def lazy &p
       Lazy[p]
@@ -40,7 +40,7 @@ module Rsec
 
   # when self failed, use other
   def | other
-    other = make_parser other
+    other = Rsec.make_parser other
     if is_a?(Or)
       Or[*self, other] # note: struct has a * behavior
     else
@@ -48,44 +48,16 @@ module Rsec
     end
   end
 
-  # sequence parse, assoc right
-  def > other
-    other = make_parser other
-    if is_a?(RSeq)
-      RSeq[*self, other]
-    else
-      RSeq[self, other]
-    end
-  end
-
-  # assoc with optional space
+  # fall to other
   def >> other
-    other = make_parser other
-    if is_a?(RSeq)
-      RSeq[*self, SkipPattern[/\s*/], other]
-    else
-      RSeq[self, SkipPattern[/\s*/], other]
-    end
+    other = Rsec.make_parser other
+    FallRight[self, other]
   end
 
-  # sequence parse, assoc left
-  def < other
-    other = make_parser other
-    if is_a?(LSeq)
-      LSeq[*self, other]
-    else
-      LSeq[self, other]
-    end
-  end
-
-  # left assoc with optional space
+  # fall to self
   def << other
-    other = make_parser other
-    if is_a?(LSeq)
-      LSeq[*self, SkipPattern[/\s*/], other]
-    else
-      LSeq[self, SkipPattern[/\s*/], other]
-    end
+    other = Rsec.make_parser other
+    FallLeft[self, other]
   end
 
   # transform result
@@ -99,33 +71,38 @@ module Rsec
   end
 
   # "p.ljoin('+')" parses things like "p+p+p+p+p"<br/>
-  # result is left associative<br/>
   # note: at least 1 of p appears<br/>
-  # note: it has nothing to do with SQL<br/>
-  # hint: think about Array#join <br/>
-  def ljoin inter
-    inter = make_parser inter
-    Ljoin[self, inter]
-  end
-  alias join ljoin
+  def join inter, space=nil
+    space = \
+      case space
+      when String then /#{Regexp.escape space}/
+      when Regexp, nil then space
+      when Pattern, SkipPattern then space.some
+      else raise 'invalid inter skip'
+      end
 
-  # similar to ljoin<br/>
-  # result is right associative
-  def rjoin inter
-    inter = make_parser inter
-    Rjoin[self, inter]
+    inter = Rsec.make_parser inter
+
+    if space
+      sj = SpacedJoin[self, inter]
+      sj.space = space
+      sj
+    else
+      Join[self, inter]
+    end
   end
 
   # repeat n or in a range<br/>
-  # when n < 0 or the range starts < 0, result is right associative
   def * n
     if n.is_a?(Range)
+      raise "invalid n: #{n}" if n.begin < 0
       if n.end > 0
         RepeatRange[self, n]
       else
         RepeatAtLeastN[self, n.begin]
       end
     else
+      raise "invalid n: #{n}" if n < 0
       RepeatN[self, n]
     end
   end
@@ -133,19 +110,49 @@ module Rsec
   # repeat at least n<br/>
   # [n, inf)
   def ** n
+    raise "invalid n: #{n}" if n < 0
     RepeatAtLeastN[self, n]
   end
 
   # look ahead
   def & other
-    other = make_parser other
+    other = Rsec.make_parser other
     LookAhead[self, other]
   end
 
   # negative look ahead
   def ^ other
-    other = make_parser other
+    other = Rsec.make_parser other
     NegativeLookAhead[self, other]
+  end
+
+  # put this in message when parsing failed
+  def fail msg
+    Fail[self, msg]
+  end
+
+  # infix operator table implemented with Shunting-Yard algorithm<br/>
+  # call-seq:
+  # <pre>
+  #     /\w+/.r.join_infix_operators \
+  #       space: ' ',
+  #       left: {'+' => 30, '*' => 40},
+  #       right: {'=' => 20}
+  # </pre>
+  # options:
+  # <pre>
+  #     space: sets space_before and space_after at the same time
+  #     space_before: skip the space before operator
+  #     space_after: skip the space after operator
+  #     left: left associative operator table, in the form of "{operator => precedence}"
+  #     right: right associative operator table
+  # </pre>
+  # NOTE: outputs reverse-polish-notation(RPN)<br/>
+  # NOTE: should put "**" before "*"
+  def join_infix_operators opts={}
+    # TODO: also make AST output available?
+    # TODO: now operator acceps string only, make it parser aware
+    ShuntingYard.new self, opts
   end
 
   # ----------------------------------------------------------------------------
@@ -173,19 +180,13 @@ module Rsec
     Cached[self]
   end
 
-  # put this in message when parsing failed
-  def fail msg
-    Fail[self, msg]
-  end
-
   # ensure x is a parser
-  def make_parser x
+  def Rsec.make_parser x
     return x if x.is_a?(::Rsec)
     x = x.send(TO_PARSER_METHOD) if x.respond_to?(TO_PARSER_METHOD)
     raise "type mismatch, <#{x}> should be a Rsec" unless x.is_a?(::Rsec)
     x
   end
-  private :make_parser
 end
 
 # String#r: convert self to parser
@@ -201,6 +202,32 @@ class Regexp
   # convienient regexp-to-parser transformer
   define_method ::Rsec::TO_PARSER_METHOD do
     ::Rsec::Pattern[self]
+  end
+end
+
+# Array#r: convert self to sequence parser
+class Array
+  # convienient regexp-to-parser transformer
+  if ::Rsec::TO_PARSER_METHOD == :r
+    def r opts={}
+      if opts[:skip]
+        parser = ::Rsec::SeqInnerSkip[*self.map{|p|::Rsec.make_parser p}]
+        parser.inner_skip = ::Rsec.make_parser opts[:skip]
+      else
+        parser = ::Rsec::Seq[*self.map{|p|::Rsec.make_parser p}]
+      end
+      parser
+    end
+  else
+    def rsec opts={}
+      if opts[:skip]
+        parser = ::Rsec::SeqInnerSkip[*self.map{|p|::Rsec.make_parser p}]
+        parser.inner_skip = ::Rsec.make_parser opts[:skip]
+      else
+        parser = ::Rsec::Seq[*self.map{|p|::Rsec.make_parser p}]
+      end
+      parser
+    end
   end
 end
 

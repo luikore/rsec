@@ -13,8 +13,8 @@ def s_exp
   ket   = /\s*\)/.r
 
   exp   = nil
-  paren = (bra < (lazy{exp} | thing) < ket)[1] | thing
-  exp   = (id < space < paren.join(space)._?).map{|n| n.flatten 1}
-  (bra < exp < ket)[1].eof
+  paren = bra >> (lazy{exp} | thing) << ket | thing
+  exp   = [id, space, paren.join(space)._?].r.map{|n| n.flatten 1}
+  (bra >> exp << ket).eof
 end
 
