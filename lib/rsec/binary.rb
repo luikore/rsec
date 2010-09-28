@@ -96,7 +96,8 @@ module Rsec
     def _parse ctx
       e = @token._parse ctx
       return unless e
-      node = [e]
+      node = []
+      node.push e if e != :_skip_
       loop do
         save_point = ctx.pos
         i = @inter._parse ctx
@@ -126,7 +127,8 @@ module Rsec
     def _parse ctx
       e = @token._parse ctx
       return unless e
-      node = [e]
+      node = []
+      node.push e if e != :_skip_
       loop do
         save_point = ctx.pos
 
