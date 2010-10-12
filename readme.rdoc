@@ -16,10 +16,12 @@ As Ruby's
 
 == Document 
 
-English Reference
+Reference
+
 http://wiki.github.com/luikore/rsec
 
-Chinese Reference
+Reference (中文 | Chinese)
+
 http://hllvm.group.javaeye.com/group/topic/17817
 
 == Links
