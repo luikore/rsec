@@ -73,7 +73,7 @@ module Rsec
     On[self, p]
   end
 
-  # "p.ljoin('+')" parses things like "p+p+p+p+p"<br/>
+  # "p.join('+')" parses things like "p+p+p+p+p"<br/>
   # note: at least 1 of p appears<br/>
   def join inter, space=nil
     space = \
