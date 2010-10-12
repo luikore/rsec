@@ -1,4 +1,4 @@
-require "#{File.dirname(__FILE__)}/helpers"
+require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class THelpers < TC
   def test_block
@@ -18,27 +18,27 @@ class THelpers < TC
   def test_eof
     p = ''.r.eof
     asp '', p
-    ase nil, p.parse('a')
+    ase INVALID, p.parse('a')
   end
   
   def test_skip_n
     p = skip_n(3).eof
-    ase :_skip_, p.parse('abc')
-    ase nil, p.parse('a')
-    ase nil, p.parse('abcd')
+    ase SKIP, p.parse('abc')
+    ase INVALID, p.parse('a')
+    ase INVALID, p.parse('abcd')
   end
   
   def test_bol
     p = bol.eof
-    ase :_skip_, p.parse('')
+    ase SKIP, p.parse('')
     p = bol(3).eof
     ase 3, p.parse('')
-    ase nil, p.parse('1')
+    ase INVALID, p.parse('1')
   end
   
   def test_value
     p = value(5).eof
     ase 5, p.parse('')
-    ase nil, p.parse('a')
+    ase INVALID, p.parse('a')
   end
 end

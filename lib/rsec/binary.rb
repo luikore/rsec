@@ -12,19 +12,19 @@ module Rsec
   # transform parse result
   class Map < Binary
     def _parse ctx
-      if res = left()._parse(ctx)
-        right()[res]
-      end
+      res = left()._parse ctx
+      return INVALID if INVALID[res]
+      right()[res]
     end
   end
 
   # called on parsing result
   class On < Binary
     def _parse ctx
-      if res = left()._parse(ctx)
-        right()[res]
-        res
-      end
+      res = left()._parse ctx
+      return INVALID if INVALID[res]
+      right()[res]
+      res
     end
   end
 
@@ -35,7 +35,7 @@ module Rsec
     def _parse ctx
       ctx.err = right()
       res = left()._parse ctx
-      ctx.err = nil if res
+      ctx.err = nil unless INVALID[res]
       res
     end
   end
@@ -43,15 +43,15 @@ module Rsec
   class FallLeft < Binary
     def _parse ctx
       ret = left()._parse ctx
-      return unless ret
-      right()._parse ctx
+      return INVALID if INVALID[ret]
+      return INVALID if INVALID[right()._parse ctx]
       ret
     end
   end
 
   class FallRight < Binary
     def _parse ctx
-      return unless left()._parse ctx
+      return INVALID if INVALID[left()._parse ctx]
       right()._parse ctx
     end
   end
@@ -61,10 +61,9 @@ module Rsec
     def _parse ctx
       res = left()._parse ctx
       pos = ctx.pos
-      if right()._parse(ctx)
-        ctx.pos = pos
-        res
-      end
+      return INVALID if INVALID[right()._parse ctx]
+      ctx.pos = pos
+      res
     end
   end
 
@@ -73,7 +72,7 @@ module Rsec
     def _parse ctx
       res = left()._parse ctx
       pos = ctx.pos
-      if ! right()._parse(ctx)
+      if INVALID[right()._parse ctx]
         ctx.pos = pos
         res
       end
@@ -95,61 +94,61 @@ module Rsec
 
     def _parse ctx
       e = @token._parse ctx
-      return unless e
+      return INVALID if INVALID[e]
       node = []
-      node.push e if e != :_skip_
+      node.push e unless SKIP[e]
       loop do
         save_point = ctx.pos
         i = @inter._parse ctx
-        unless i
+        if INVALID[i]
           ctx.pos = save_point
           break
         end
 
         t = @token._parse ctx
-        unless t
+        if INVALID[t]
           ctx.pos = save_point
           break
         end
 
         break if save_point == ctx.pos # stop if no advance, prevent infinite loop
-        node.push i if i != :_skip_
-        node.push t if t != :_skip_
+        node.push i unless SKIP[i]
+        node.push t unless SKIP[t]
       end # loop
       node
     end
   end
 
-  # join inter, space
+  # join inter, space(skip)
+  # format: token (space inter space token)*
   class SpacedJoin < Join
     attr_accessor :space
 
     def _parse ctx
       e = @token._parse ctx
-      return unless e
+      return INVALID if INVALID[e]
       node = []
-      node.push e if e != :_skip_
+      node.push e unless SKIP[e]
       loop do
         save_point = ctx.pos
 
-        break unless ctx.skip @space
+        break if INVALID[ctx.skip @space]
         i = @inter._parse ctx
-        unless i
+        if INVALID[i]
           ctx.pos = save_point
           break
         end
 
-        break unless ctx.skip @space
-        ctx.skip @space
+        break if INVALID[ctx.skip @space]
         t = @token._parse ctx
-        unless t
+        if INVALID[t]
           ctx.pos = save_point
           break
         end
 
         break if save_point == ctx.pos # stop if no advance, prevent infinite loop
-        node.push i if i != :_skip_
-        node.push t if t != :_skip_
+        node.push i unless SKIP[i]
+        node.push t unless SKIP[t]
       end # loop
       node
     end
@@ -175,13 +174,13 @@ module Rsec
       rp_node = []
       @at_least.times do
         res = @base._parse ctx
-        return nil unless res
-        rp_node.push res if res != :_skip_
+        return INVALID if INVALID[res]
+        rp_node.push res unless SKIP[res]
       end
       @optional.times do
         res = @base._parse ctx
-        break unless res
-        rp_node.push res if res != :_skip_
+        break if INVALID[res]
+        rp_node.push res unless SKIP[res]
       end
       rp_node
     end
@@ -207,8 +206,8 @@ module Rsec
     def _parse ctx
       @n.times.inject([]) do |rp_node|
         res = @base._parse ctx
-        return unless res
-        rp_node.push res if res != :_skip_
+        return INVALID if INVALID[res]
+        rp_node.push res unless SKIP[res]
       end
     end
   end
@@ -219,8 +218,8 @@ module Rsec
       rp_node = []
       @n.times do
         res = @base._parse(ctx)
-        return unless res
-        rp_node.push res if res != :_skip_
+        return INVALID if INVALID[res]
+        rp_node.push res unless SKIP[res]
       end
       # note this may be an infinite action
       # returns if the pos didn't change
@@ -228,7 +227,7 @@ module Rsec
         save_point = ctx.pos
         res = @base._parse ctx
         break if save_point == ctx.pos
-        rp_node.push res if res != :_skip_
+        rp_node.push res unless SKIP[res]
       end
       rp_node
     end
@@ -284,10 +283,10 @@ module Rsec
       save_point = ctx.pos
       @ops.each do |parser, (precedent, is_left)|
         ret = parser._parse ctx
-        if ret
-          return ret, precedent, is_left
-        else
+        if INVALID[ret]
           ctx.pos = save_point
+        else
+          return ret, precedent, is_left
         end
       end
       nil
@@ -298,7 +297,7 @@ module Rsec
       stack = []
       ret = @ret_class.new
       token = @term._parse ctx
-      return unless token
+      return INVALID if INVALID[token]
       ret.push token
       loop do
         save_point = ctx.pos
@@ -322,7 +321,7 @@ module Rsec
         # parse term
         ctx.skip @space_after
         token = @term._parse ctx
-        unless token
+        if INVALID[token]
           ctx.pos = save_point
           break
         end

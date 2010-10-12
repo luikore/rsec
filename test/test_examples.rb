@@ -14,6 +14,15 @@ class TExamples < TC
   end
   
   def test_arithmetic
+    # step by step
+    s = '1'
+    ase eval(s), @a.parse(s)
+    s = '3+ 2'
+    ase eval(s), @a.parse(s)
+    s = '5-2*1'
+    ase eval(s), @a.parse(s)
+    s = '(2)'
+    ase eval(s), @a.parse(s)
     s = '1+(2- (3+ 4))/5 * 2*4 +1'
     ase eval(s), @a.parse(s)
 

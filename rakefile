@@ -5,6 +5,10 @@ task :tests do
   end
 end
 
+# alias
+desc 'test all'
+task :test => :tests
+
 desc 'compare performance with treetop'
 task :bench do
   require 'bench/bench.rb'

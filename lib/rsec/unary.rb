@@ -12,7 +12,7 @@ module Rsec
   # matches a pattern
   class Pattern < Unary
     def _parse ctx
-      ctx.scan some()
+      ctx.scan some() or INVALID
     end
 
     def until
@@ -34,7 +34,7 @@ module Rsec
   # matches beginning of line
   class Bol < Unary
     def _parse ctx
-      ctx.bol ? some() : nil
+      ctx.bol ? some() : INVALID
     end
   end
   
@@ -42,7 +42,7 @@ module Rsec
   class Eof < Unary
     def _parse ctx
       ret = some()._parse ctx
-      ctx.eos? ? ret : nil
+      ctx.eos? ? ret : INVALID
     end
   end
   
@@ -50,12 +50,12 @@ module Rsec
   class Maybe < Unary
     def _parse ctx
       pos = ctx.pos
-      if res = some()._parse(ctx)
-        res
-      else
+      res = some()._parse(ctx)
+      if INVALID[res]
         ctx.pos = pos
-        :_skip_
+        return SKIP
       end
+      res
     end
   end
 
@@ -63,14 +63,16 @@ module Rsec
   # optimize for pattern
   class SkipPattern < Unary
     def _parse ctx
-      ctx.skip(some()) and :_skip_
+      return INVALID unless ctx.skip some()
+      SKIP
     end
   end
 
   # skip parser
   class Skip < Unary
     def _parse ctx
-      some()._parse(ctx) and :_skip_
+      return INVALID if INVALID[some()._parse ctx]
+      SKIP
     end
   end
 
@@ -79,9 +81,9 @@ module Rsec
   class SkipN < Unary
     def _parse ctx
       ctx.pos = ctx.pos + some()
-      :_skip_
+      SKIP
     rescue RangeError # index may out of range
-      nil
+      INVALID
     end
   end
 
@@ -89,7 +91,7 @@ module Rsec
   # only constructable for Patterns
   class UntilPattern < Unary
     def _parse ctx
-      ctx.scan_until some()
+      ctx.scan_until some() or INVALID
     end
 
     def skip
@@ -101,7 +103,7 @@ module Rsec
   # only constructable for Patterns
   class SkipUntilPattern < Unary
     def _parse ctx
-      ctx.skip_until(some()) and :_skip_
+      ctx.skip_until(some()) ? SKIP : INVALID
     end
   end
 

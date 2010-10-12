@@ -1,4 +1,4 @@
-require "#{File.dirname(__FILE__)}/helpers"
+require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class TOpTable < TC
   def test_op_table

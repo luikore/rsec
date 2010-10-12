@@ -4,6 +4,8 @@
 
 module Rsec
 
+  # sequence combinator<br/>
+  # result in an array
   class Seq < Array
     include ::Rsec
 
@@ -11,8 +13,8 @@ module Rsec
       ret = []
       each do |e|
         res = e._parse ctx
-        return unless res
-        ret << res if res != :_skip_
+        return INVALID if INVALID[res]
+        ret << res unless SKIP[res]
       end
       ret
     end
@@ -25,8 +27,7 @@ module Rsec
     end
   end
 
-  # sequence combinator<br/>
-  # result in an array
+  # skips a parser(@inner_skip) between tokens
   class SeqInnerSkip < Array
     include ::Rsec
     attr_accessor :inner_skip
@@ -35,12 +36,13 @@ module Rsec
       ret = []
       skipper = nil
       each do |e|
+        # no skip first token
         if skipper
-          return unless skipper._parse ctx
+          return INVALID if INVALID[skipper._parse ctx]
         end
         res = e._parse ctx
-        return unless res
-        ret << res if res != :_skip_
+        return INVALID if INVALID[res]
+        ret << res unless SKIP[res]
         skipper = @inner_skip
       end
       ret
@@ -62,13 +64,15 @@ module Rsec
     attr_accessor :idx
 
     def _parse ctx
-      ret = nil
+      ret = INVALID
       counter = 0
       each do |p|
         res = p._parse ctx
-        return unless res
-        ret ||= res if counter == @idx and res != :_skip_
-        counter += 1 if res != :_skip_
+        return INVALID if INVALID[res]
+        if INVALID[ret]
+          ret = res if counter == @idx and ! SKIP[res]
+        end
+        counter += 1 unless SKIP[res]
       end
       ret
     end
@@ -79,17 +83,20 @@ module Rsec
     attr_accessor :inner_skip, :idx
 
     def _parse ctx
-      ret = nil
+      ret = INVALID
       counter = 0
       skipper = nil
       each do |p|
+        # no skip first token
         if skipper
-          return unless skipper._parse ctx
+          return INVALID if INVALID[skipper._parse ctx]
         end
         res = p._parse ctx
-        return unless res
-        ret ||= res if counter == @idx and res != :_skip_
-        counter += 1 if res != :_skip_
+        return INVALID if INVALID[res]
+        if INVALID[ret]
+          ret = res if counter == @idx and ! SKIP[res]
+        end
+        counter += 1 unless SKIP[res]
         skipper = @inner_skip
       end
       ret
@@ -105,10 +112,10 @@ module Rsec
       save_point = ctx.pos
       each do |e|
         res = e._parse ctx
-        return res if res
+        return res unless INVALID[res]
         ctx.pos = save_point
       end
-      nil # don't forget to fail it when none of the elements matches
+      INVALID # don't forget to fail it when none of the elements matches
     end
   end # class
 end

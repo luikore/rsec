@@ -15,7 +15,7 @@ module Rsec
   def parse! str, source_name='source'
     ctx = ParseContext.new str, source_name
     ret = _parse ctx
-    unless ret
+    if INVALID[ret]
       raise ParseError[ctx.err || 'syntax error', ctx]
     end
     ret
@@ -72,7 +72,36 @@ module Rsec
     end
   end
 
-  # error class for catching
+  # the skip token
+  SKIP = Object.new
+  class << SKIP
+    # check if x is skip token
+    def [] x
+      self == x
+    end
+    def to_str
+      'SKIP_TOKEN'
+    end
+    def inspect
+      'SKIP_TOKEN'
+    end
+  end
+
+  # the invalid token
+  INVALID = Object.new
+  class << INVALID
+    def [] x
+      self == x
+    end
+    def to_str
+      'INVALID_TOKEN'
+    end
+    def inspect
+      'INVALID_TOKEN'
+    end
+  end
+
+  # error class for rescue
   class ParseError < StandardError
     attr_reader :ctx, :msg
 

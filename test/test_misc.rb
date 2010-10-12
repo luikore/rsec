@@ -1,4 +1,4 @@
-require "#{File.dirname(__FILE__)}/helpers"
+require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class TMisc < TC
   def test_cache
@@ -10,13 +10,18 @@ class TMisc < TC
   def test_map
     p = /\w/.r.map{|n| n*2}
     ase 'bb', p.parse('b')
+    ase INVALID, p.parse('.')
   end
   
   def test_on
     v = nil
     p = 'x'.r.on{|n| v = n+'v'}
-    p.parse 'x'
-    ase 'xv',v
+    ase 'x', p.parse('x')
+    ase 'xv', v # changed
+
+    v = 3
+    ase INVALID, p.parse('v')
+    ase 3, v # not changed
   end
   
   def test_fail
@@ -29,7 +34,8 @@ class TMisc < TC
   def test_maybe
     [:_? , :maybe].each do |m|
       p = ['v', 'q'].r.send m
-      ase :_skip_, p.parse('')
+      ase SKIP, p.parse('')
+      ase INVALID, p.eof.parse('v')
       ase ['v', 'q'], p.parse('vq')
     end
   end

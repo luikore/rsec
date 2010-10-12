@@ -1,4 +1,4 @@
-require "#{File.dirname(__FILE__)}/helpers"
+require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class TPattern < TC
   def test_create
@@ -9,18 +9,18 @@ class TPattern < TC
     asr do
       p1.eof.parse! 'abcd'
     end
-    ase nil, p1.eof.parse('abcd')
+    ase INVALID, p1.eof.parse('abcd')
     
     asr do 
       p1.eof.parse! 'xabc'
     end
-    ase nil, p1.eof.parse('xabc')
+    ase INVALID, p1.eof.parse('xabc')
   end
 
   def test_skip
     p = 'ef'.r.skip
-    ase :_skip_, p.parse('ef')
-    ase nil, p.parse('bb')
+    ase SKIP, p.parse('ef')
+    ase INVALID, p.parse('bb')
   end
 
   def test_until
@@ -31,7 +31,7 @@ class TPattern < TC
 
   def test_skip_until
     p = /\d\w+\d/.r.until.skip
-    ase :_skip_, p.parse("bcd\n3vve4")
-    ase nil, p.eof.parse("bcd\n3vve4-")
+    ase SKIP, p.parse("bcd\n3vve4")
+    ase INVALID, p.eof.parse("bcd\n3vve4-")
   end
 end

@@ -24,7 +24,7 @@ module Rsec
     end
 
     # beginning of line parser
-    def bol default_return=:_skip_
+    def bol default_return=SKIP
       Bol[default_return]
     end
     
@@ -210,7 +210,13 @@ end
 
 # Array#r: convert self to sequence parser
 class Array
-  # convienient regexp-to-parser transformer
+  # convienient regexp-to-parser transformer<br/>
+  # if a :skip option is given, the string matching the pattern between elems will be neglected<br/>
+  # e.g. 
+  # <pre>
+  #   ['a', 'b', 'c'].r skip:(/\ /).parse('a b c')
+  #   # => ['a', 'b', 'c']
+  # </pre>
   if ::Rsec::TO_PARSER_METHOD == :r
     def r opts={}
       if opts[:skip]

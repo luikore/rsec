@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "rsec"
-  s.version = "0.0.7"
+  s.version = "0.0.8"
   s.author = "NS"
   s.email = "usurffx@gmail.com"
   s.homepage = "http://wiki.github.com/luikore/rsec"

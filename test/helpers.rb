@@ -6,6 +6,11 @@ include Rsec::Helpers
 require "test/unit"
 
 TC = Test::Unit::TestCase
+class TC
+  INVALID = Rsec::INVALID
+  SKIP = Rsec::SKIP
+end
+
 module Test::Unit::Assertions
   alias ase assert_equal
   def asr

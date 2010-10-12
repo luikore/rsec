@@ -1,27 +1,27 @@
-require "#{File.dirname(__FILE__)}/helpers"
+require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class TPattern < TC
   def test_multiply
     p = ('ce'.r * 3).eof
     ase ['ce','ce','ce'], (p.parse 'cecece')
-    ase nil, (p.parse 'cece')
-    ase nil, (p.parse 'cececece')
+    ase INVALID, (p.parse 'cece')
+    ase INVALID, (p.parse 'cececece')
     
     p = ('ce'.r * 0).eof
     ase [], (p.parse '')
-    ase nil, (p.parse 'ce')
+    ase INVALID, (p.parse 'ce')
   end
   
   def test_range
     p = ('ce'.r * (2..3)).eof
-    ase nil, (p.parse 'ce')
+    ase INVALID, (p.parse 'ce')
     ase ['ce','ce'], (p.parse 'cece')
-    ase nil, (p.parse 'cececece')
+    ase INVALID, (p.parse 'cececece')
   end
   
   def test_inf
     p = ('ce'.r * (3..-1)).eof
-    ase nil,
+    ase INVALID,
       (p.parse 'cece')
     ase ['ce','ce','ce'],
       (p.parse 'cecece')

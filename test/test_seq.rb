@@ -1,20 +1,20 @@
-require "#{File.dirname(__FILE__)}/helpers"
+require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class TSeq < TC
   def test_seq
     p = ['a', 'b', 'c'].r
     ase ['a','b','c'], p.parse('abc')
-    ase nil, p.parse('a')
-    ase nil, p.parse('b')
-    ase nil, p.parse('c')
-    ase nil, p.parse('bc')
-    ase nil, p.parse('ab')
+    ase INVALID, p.parse('a')
+    ase INVALID, p.parse('b')
+    ase INVALID, p.parse('c')
+    ase INVALID, p.parse('bc')
+    ase INVALID, p.parse('ab')
   end
 
   def test_seq_skip
     p = %w[abc ef vv].r skip: /\s+/
     ase %w[abc ef vv], p.parse("abc    ef vv")
-    ase nil, p.parse("abcef vv")
+    ase INVALID, p.parse("abcef vv")
   end
 
   def test_seq_mix
