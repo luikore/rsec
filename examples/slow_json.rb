@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# gramar from
+# grammar from
 #   http://www.json.org/
 
 require "rsec"
@@ -18,9 +18,7 @@ class SlowJSON
     @parser.parse! s
   end
 
-  unless __FILE__ == $PROGRAM_NAME
-    private
-  end
+  private
 
   # term (, term)*
   def elem_parser term
