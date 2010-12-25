@@ -33,7 +33,7 @@ class SlowJSON
                   'r'.r >> value("\r") |
                   't'.r >> value("\t") |
                   'u'.r >> /[0-9a-e]{4}/i.r.map{|s| s.to_i(16).chr}
-    ['\\', escape_char].r | /[^"]+/.r
+    /[^"\\]+/.r | '\\'.r >> escape_char
   end
 
   def generate_parser
