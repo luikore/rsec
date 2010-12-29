@@ -1,4 +1,10 @@
 *.gem
 *.o
 *.hi
+*_stub.c
+*_stub.h
+*.a
+*.so
+*.def
 nbproject/
+ext/rsec/Makefile
