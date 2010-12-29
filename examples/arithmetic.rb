@@ -12,12 +12,10 @@ def arithmetic
   end
 
   num    = /[+-]?[1-9]\d*(\.\d+)?/.r.map &:to_f
-  bra    = /\(\s*/.r.skip
-  ket    = /\s*\)/.r.skip
   expr   = nil # declare for lazy
-  paren  = bra >> lazy{expr} << ket
+  paren  = lazy{expr}.wrap_ '()'
   factor = num | paren
-  term   = factor.join(/[\*\/]/, /\s*/).map &calculate
-  expr   = term.join(/[\+\-]/, /\s*/).map &calculate
+  term   = factor.join(one_of_('*/%')).map &calculate
+  expr   = term.join(one_of_('+-')).map &calculate
   expr.eof
 end

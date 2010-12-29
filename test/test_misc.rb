@@ -13,17 +13,6 @@ class TMisc < TC
     ase INVALID, p.parse('.')
   end
   
-  def test_on
-    v = nil
-    p = 'x'.r.on{|n| v = n+'v'}
-    ase 'x', p.parse('x')
-    ase 'xv', v # changed
-
-    v = 3
-    ase INVALID, p.parse('v')
-    ase 3, v # not changed
-  end
-  
   def test_fail
     p = 'v'.r.fail 'omg!'
     p.eof.parse! 'u'

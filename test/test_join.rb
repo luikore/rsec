@@ -8,7 +8,7 @@ class TMisc < TC
     ase INVALID, p0.eof.parse('a+ bc+d')
     ase INVALID, p0.eof.parse('a+b+')
 
-    p1 = [/[a-z]{1,3}/, '3'].r[0].join '+', /\s/
+    p1 = [/[a-z]{1,3}/, '3'].r[0].join /\s/.r >> '+' << /\s/
     ase ['abc'], p1.eof.parse('abc3')
     ase %w[a + bc + d], p1.parse('a3 + bc3 + d3')
     ase INVALID, p1.eof.parse('a+b+')

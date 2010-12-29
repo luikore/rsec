@@ -104,7 +104,7 @@ module Rsec
   end
 
   # or combinator<br/>
-  # result in on of the members, or nil
+  # result in one of the members, or nil
   class Or < Array
     include ::Rsec
 

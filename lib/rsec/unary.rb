@@ -107,6 +107,34 @@ module Rsec
     end
   end
 
+  class OneOf < Unary
+    def _parse ctx
+      return INVALID if ctx.eos?
+      chr = ctx.getch
+      if some().index(chr)
+        chr
+      else
+        ctx.pos = ctx.pos - 1
+        INVALID
+      end
+    end
+  end
+
+  class SpacedOneOf < Unary
+    def _parse ctx
+      save_point = ctx.pos
+      ctx.skip /\s*/
+      return INVALID if ctx.eos?
+      chr = ctx.getch
+      unless some().index(chr)
+        ctx.pos = save_point
+        return INVALID
+      end
+      ctx.skip /\s*/
+      chr
+    end
+  end
+
   # dynamic parser
   class Dynamic < Unary
     def _parse ctx

@@ -22,7 +22,7 @@ class SlowJSON
 
   # term (, term)*
   def elem_parser term
-    /\s*/.r >> term.join(/\s*,\s*/.r.skip) << /\s*/
+    term.join(/\s*,\s*/.r.skip)
   end
 
   def chars_parser
@@ -40,7 +40,7 @@ class SlowJSON
   end
 
   def generate_parser
-    string  = '"'.r >> (chars_parser ** 0).map(&:join) << '"'
+    string  = (chars_parser ** 0).map(&:join).wrap('""')
     # -? int frac? exp?
     number  = /-?
                (?:[1-9]\d*|0)
@@ -53,9 +53,9 @@ class SlowJSON
               'null'.r  >> value(nil)
     pair    = [string, /\s*:\s*/.r.skip, @value].r
     @array  = /\[\s*\]/.r >> value([]) |
-              '['.r >> elem_parser(@value) << ']'
+              elem_parser(@value).wrap_('[]')
     @object = /\{\s*\}/.r >> value({}) |
-              '{'.r >> elem_parser(pair).map{|arr|Hash[arr]} << '}'
+              elem_parser(pair).wrap_('{}').map{|arr|Hash[arr]}
   end
 
 end

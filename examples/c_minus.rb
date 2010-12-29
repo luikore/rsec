@@ -20,7 +20,7 @@ class CMinus
 
   # call(function apply) expression
   def call expr
-    args = expr.join ','.r.skip, /\s*/
+    args = expr.join ','.r.skip
     seq(ID, '(', args._?, ')')
   end
 
@@ -70,7 +70,7 @@ class CMinus
     type_id = [TYPE << /[\ \t]+/, ID].r.cached
     # p type_id.parse! 'int a'
     
-    var_decl = seq(type_id, ('['.r >> NUM << ']')._?) << EOSTMT
+    var_decl = seq(type_id, NUM.wrap_('[]')._?) << EOSTMT
     # p var_decl.parse! 'int a[12];'
     # p var_decl.parse! 'int a;'
 
@@ -82,8 +82,8 @@ class CMinus
     # p stmt.parse! 'gcd(v,u-u/v*v);'
     
     param = seq(type_id, /\[\s*\]/.r._?)
-    params = param.join(','.r.skip, /\s*/) | 'void'
-    brace = '('.r >> SPACE >> params << SPACE << ')'
+    params = param.join(/\s*,\s*/.r.skip) | 'void'
+    brace = params.wrap_ '()'
     fun_decl = seq(type_id, brace, block)
     
     decl_list = (fun_decl | var_decl).join SPACE
@@ -99,7 +99,8 @@ end
 c_minus = CMinus.new
 require "pp"
 
-pp c_minus.program.parse! %Q[int gcd(int u, int v)
+pp c_minus.program.parse! %Q[
+int gcd(int u, int v)
 {
   if (v == 0) return u ;
   else return gcd(v,u-u/v*v);

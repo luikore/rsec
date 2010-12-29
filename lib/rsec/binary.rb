@@ -18,16 +18,6 @@ module Rsec
     end
   end
 
-  # called on parsing result
-  class On < Binary
-    def _parse ctx
-      res = left()._parse ctx
-      return INVALID if INVALID[res]
-      right()[res]
-      res
-    end
-  end
-
   # set the parsing error in ctx<br/>
   # if left failed, the error would show up<br/>
   # if not, the error disappears
@@ -119,41 +109,6 @@ module Rsec
     end
   end
 
-  # join inter, space(skip)
-  # format: token (space inter space token)*
-  class SpacedJoin < Join
-    attr_accessor :space
-
-    def _parse ctx
-      e = @token._parse ctx
-      return INVALID if INVALID[e]
-      node = []
-      node.push e unless SKIP[e]
-      loop do
-        save_point = ctx.pos
-
-        break if INVALID[ctx.skip @space]
-        i = @inter._parse ctx
-        if INVALID[i]
-          ctx.pos = save_point
-          break
-        end
-
-        break if INVALID[ctx.skip @space]
-        t = @token._parse ctx
-        if INVALID[t]
-          ctx.pos = save_point
-          break
-        end
-
-        break if save_point == ctx.pos # stop if no advance, prevent infinite loop
-        node.push i unless SKIP[i]
-        node.push t unless SKIP[t]
-      end # loop
-      node
-    end
-  end
-
   # repeat from range.begin.abs to range.end.abs <br/>
   # note: range's max should always be > 0<br/>
   #       see also helpers
@@ -230,6 +185,30 @@ module Rsec
         rp_node.push res unless SKIP[res]
       end
       rp_node
+    end
+  end
+
+  class Wrap < Binary
+    def _parse ctx
+      save_point = ctx.pos
+      (ctx.pos = save_point and return INVALID) unless right[0] == ctx.getch
+      res = left._parse ctx
+      (ctx.pos = save_point and return INVALID) if INVALID[res]
+      (ctx.pos = save_point and return INVALID) unless right[1] == ctx.getch
+      res
+    end
+  end
+
+  class WrapSpace < Binary
+    def _parse ctx
+      save_point = ctx.pos
+      (ctx.pos = save_point and return INVALID) unless right[0] == ctx.getch
+      ctx.skip /\s*/
+      res = left._parse ctx
+      (ctx.pos = save_point and return INVALID) if INVALID[res]
+      ctx.skip /\s*/
+      (ctx.pos = save_point and return INVALID) unless right[1] == ctx.getch
+      res
     end
   end
 

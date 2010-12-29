@@ -7,7 +7,7 @@ module Rsec
   module Helpers
     # --------------------------------------------------------------------------
     # Unary
-    
+
     # lazy parser
     def lazy &p
       Lazy[p]
@@ -33,6 +33,22 @@ module Rsec
     def skip_n n
       SkipN[n]
     end
+
+    def one_of str
+      raise 'should be string' unless str.is_a?(String)
+      raise 'str len should > 0' if str.empty?
+      raise 'str should be ascii' unless str.bytesize == str.size
+      OneOf[str.dup.freeze]
+    end
+
+    def one_of_ str
+      raise 'should be string' unless str.is_a?(String)
+      raise 'str len should > 0' if str.empty?
+      raise 'str should be ascii' unless str.bytesize == str.size
+      raise 'str should not contain space' if str =~ /\s/
+      SpacedOneOf[str.dup.freeze]
+    end
+
   end
 
   # robust
@@ -49,6 +65,22 @@ module Rsec
     else
       Or[self, other]
     end
+  end
+
+  # wrap(parser, '()') is equivalent to '('.r >> parser << ')' <br/>
+  # str should be 2 ascii chars (begin-char and end-char)
+  def wrap str
+    raise 'should be string' unless str.is_a?(String)
+    raise 'str should be 2 ascii chars (begin-char and end-char)' unless (str.bytesize == 2 and str.size == 2)
+    Wrap[self, str.dup.freeze]
+  end
+
+  # wrap_(parser, '()') is equivalent to /\(\s*/.r >> parser << /\s*\)/
+  # str should be 2 ascii chars (begin-char and end-char)
+  def wrap_ str
+    raise 'should be string' unless str.is_a?(String)
+    raise 'str should be 2 ascii chars (begin-char and end-char)' unless (str.bytesize == 2 and str.size == 2)
+    WrapSpace[self, str.dup.freeze]
   end
 
   # fall to other
@@ -68,31 +100,13 @@ module Rsec
     Map[self, p]
   end
 
-  # trigger(call the given block) when parsed
-  def on &p
-    On[self, p]
-  end
-
-  # "p.join('+')" parses things like "p+p+p+p+p"<br/>
-  # note: at least 1 of p appears<br/>
-  def join inter, space=nil
-    space = \
-      case space
-      when String then /#{Regexp.escape space}/
-      when Regexp, nil then space
-      when Pattern, SkipPattern then space.some
-      else raise 'invalid inter skip'
-      end
-
+  # "p.join('+')" parses strings like "p+p+p+p+p".<br/>
+  # Note that at least 1 of p appears in the string.<br/>
+  # Sometimes it is useful to reverse the joining:<br/>
+  # /\s*/.r.skip.join('p') parses string like " p p  p "
+  def join inter
     inter = Rsec.make_parser inter
-
-    if space
-      sj = SpacedJoin[self, inter]
-      sj.space = space
-      sj
-    else
-      Join[self, inter]
-    end
+    Join[self, inter]
   end
 
   # repeat n or in a range<br/>
@@ -129,7 +143,7 @@ module Rsec
     NegativeLookAhead[self, other]
   end
 
-  # put this in message when parsing failed
+  # when parsing failed, show msg instead of default message
   def fail msg
     Fail[self, msg]
   end

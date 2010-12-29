@@ -21,9 +21,6 @@ module Rsec
     ret
   end
 
-  # TODO
-  # continuous parsing
-
   # parse context inherits from StringScanner<br/>
   # <br/>
   # attributes:<br/>
@@ -101,6 +98,27 @@ module Rsec
     end
   end
 
+  attr_accessor :name
+  def inspect
+    # TODO move
+    @name ||= self.class.to_s[/\w+$/]
+    case self
+    when Lazy, Dynamic
+      "<#{name}>"
+    when Binary
+      "<#{name} #{left.inspect} #{right.inspect}>"
+    when Unary
+      "<#{name} #{some.inspect}>"
+    when Array
+      # don't use redefined map!
+      res = []
+      each{|e| res << e.inspect}
+      "<#{name} #{res.join ' '}>"
+    else
+      "<#{name}>"
+    end
+  end
+
   # error class for rescue
   class ParseError < StandardError
     attr_reader :ctx, :msg
@@ -117,6 +135,7 @@ module Rsec
 
     # info with source position
     def to_s
+      # TODO show last parser
       coord = "\"#{@ctx.source}\": (#{@ctx.line}, #{@ctx.col})"
       "[#{@msg}] in #{coord}\n#{@ctx.current_line_text[0..79]}\n#{' ' * @ctx.col}^"
     end

@@ -6,20 +6,19 @@ class Scheme
 
   def initialize
     spacee  = /\s*/.r.skip
-    bra     = /\(\s*/.r.skip
-    ket     = /\s*\)/.r.skip
     boolean = /\#[tf]/.    r.map {|n| ValueNode[n=='#t'] }
     integer = /0|[1-9]\d*/.r.map {|n| ValueNode[n.to_i]  }
-    id      = /[^\s\(\)\[\]]+/.r.on {|n|
+    id      = /[^\s\(\)\[\]]+/.r.map {|n|
                 def n.eval bind, *xs
                   bind[self]
                 end
+                n
               }
     atom    = boolean | integer | id
     list    = nil # declare for lazy
     cell    = atom | lazy{list}
-    list    = (   bra >> cell.join(spacee)._? << ket   ).map {|n| ListNode[*n] }
-    cells   = (spacee >> cell.join(spacee)._? << spacee).map {|n| ListNode[*n] }
+    list    = spacee.join(cell).wrap('()').map {|n| ListNode[*n] }
+    cells   = spacee.join(cell).map {|n| ListNode[*n] }
     @parser = cells.eof
   end
 
