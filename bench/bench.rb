@@ -18,6 +18,10 @@ require "benchmark"
 
 # ------------------------------------------------------------------------------
 
+puts ''
+puts Benchmark::CAPTION
+puts ''
+
 print 'rsec result:', "\t"
 p = arithmetic()
 puts p.parse! s
@@ -52,3 +56,25 @@ puts((Benchmark.measure {
     t.parse s
   }
 }), '')
+
+PARSEC_ARITH_SO = "#{File.dirname(__FILE__)}/parsec/Arithmetic.so"
+if File.exist?(PARSEC_ARITH_SO)
+  require 'dl/import'
+  require 'dl/types'
+  module Arithmetic
+    extend DL::Importer
+    dlload "#{File.dirname(__FILE__)}/parsec/Arithmetic.so"
+    extern "long calculate(char *)", :stdcall
+    extern "long donothing(char *)", :stdcall
+  end
+  print 'parsec result:', "\t"
+  puts Arithmetic.calculate s
+  puts((Benchmark.measure {
+    1000.times {
+      Arithmetic.calculate s
+    }
+  }), '')
+else
+  puts 'parsec benchmark requires ghc installation. cd bench/parsec and run make.sh(unix) or make.bat(windows)'
+end
+

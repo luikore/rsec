@@ -11,6 +11,6 @@ task :test => :tests
 
 desc 'compare performance with treetop'
 task :bench do
-  require 'bench/bench.rb'
+  require './bench/bench.rb'
 end
 

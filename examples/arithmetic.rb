@@ -11,7 +11,7 @@ def arithmetic
     end
   end
 
-  num    = /[+-]?[1-9]\d*(\.\d+)?/.r.map &:to_f
+  num    = (prim(:double) rescue (/[+-]?[1-9]\d*(\.\d+)?/.r.map &:to_f))
   expr   = nil # declare for lazy
   paren  = lazy{expr}.wrap_ '()'
   factor = num | paren

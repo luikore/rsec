@@ -2,8 +2,9 @@ require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class TPattern < TC
   def test_create
+    p1 = 'x'.r
+    asp 'x', p1
     p1 = 'abc'.r
-    ase /abc/.r, p1
     asp 'abc', p1
     
     asr do
@@ -21,12 +22,20 @@ class TPattern < TC
     p = 'ef'.r.skip
     ase SKIP, p.parse('ef')
     ase INVALID, p.parse('bb')
+
+    p = 'f'.r.skip
+    ase SKIP, p.parse('f')
+    ase INVALID, p.parse('x')
   end
 
   def test_until
     p = 'ef'.r.until
     asp 'xef', p
     asp "x\nef", p
+    
+    p = 'e'.r.until
+    asp 'xe', p
+    asp "x\ne", p
   end
 
   def test_skip_until
