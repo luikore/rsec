@@ -11,10 +11,6 @@ static VALUE invalid;
 static VALUE skip;
 static ID ID_parse;
 
-// -----------------------------------------------------------------------------
-// predefined number parser
-
-
 struct strscanner {
 	unsigned long flags;
 	VALUE str;
@@ -22,56 +18,55 @@ struct strscanner {
 	long curr;
 };
 
-static int is_oct_or_hex(char* pointer) {
-	if (pointer[0] == '0')\
-		if (isdigit(pointer[1]) || pointer[1] == 'x' || pointer[1] == 'X')\
-			return 1;
-	return 0;
-}
-
 static VALUE call_parse(VALUE parser, VALUE ctx) {
 	return rb_funcall2(parser, ID_parse, 1, &ctx);
 }
 
-// unsigned decimal / oct / hex
-#define unsigned_default_filter \
-	if (! isdigit(pointer[0])) return invalid;
 
-// unsigned decimal
-#define unsigned_decimal_filter \
-	if (! isdigit(pointer[0])) return invalid;\
-	if (is_oct_or_hex(pointer)) return invalid;
+// -----------------------------------------------------------------------------
+// predefined number parser
 
-// signed decimal / oct /hex
-#define default_filter \
-	if (pointer[0] == '+' || pointer[0] == '-') {\
-		if (!(isdigit(pointer[1]))) return invalid;\
-	} else {\
-		if (! isdigit(pointer[0])) return invalid;\
-	}
 
-// signed decimal
-#define decimal_filter \
-	if (pointer[0] == '+' || pointer[0] == '-') {\
-		if (is_oct_or_hex(pointer + 1)) return invalid;\
-	} else {\
-		if (is_oct_or_hex(pointer)) return invalid;\
-	}
+static int is_hex(char* pointer) {
+	if (pointer[0] == '0')
+		if (pointer[1] == 'x' || pointer[1] == 'X')
+			return 1;
+	return 0;
+}
 
-// not start with space
-#define minimal_filter \
-	if (isspace(pointer[0])) return invalid;
-
-#define DEFINE_PARSER(parser_name, res_type, parse_function, convert_macro, filter) \
+#define DEFINE_PARSER(parser_name, res_type, float_parse_function, int_parse_function, convert_macro, is_floating) \
 	static VALUE parser_name(VALUE self, VALUE ctx) {\
 		char* pointer;\
 		char* tail;\
 		struct strscanner* ss;\
+		char first_char;\
+		VALUE* data = RSTRUCT_PTR(self);\
 		res_type res;\
 		Data_Get_Struct(ctx, struct strscanner, ss);\
 		pointer = RSTRING_PTR(ss->str) + ss->curr;\
-		filter;\
-		res = parse_function(pointer, &tail);\
+		first_char = pointer[0];\
+		if (isspace(first_char)) return invalid;\
+		switch(data[0]) {\
+			case INT2FIX(0):\
+				if (first_char == '+' || first_char == '-') return invalid;\
+			case INT2FIX(1):\
+				if (first_char == '+') return invalid;\
+			case INT2FIX(2):\
+				if (first_char == '-') return invalid;\
+		}\
+		if (int_parse_function) {\
+			char* hex_check_ptr = pointer;\
+			if (first_char == '+' || first_char == '-') hex_check_ptr++;\
+			if (data[1] == Qtrue) /* true: hex */ \
+				if (! is_hex(hex_check_ptr))\
+					return invalid;\
+			if (data[1] == Qfalse) /* false: decimal */ \
+				if (is_hex(hex_check_ptr))\
+					return invalid;\
+			res = float_parse_function(pointer, &tail);\
+		} else {\
+			res = int_parse_function(pointer, &tail, FIX2INT(data[1]));\
+		}\
 		if (tail == pointer) {\
 			return invalid;\
 		} else {\
@@ -81,50 +76,20 @@ static VALUE call_parse(VALUE parser, VALUE ctx) {
 		}\
 	}
 
-// batch operations
-#define DEFINE_PARSERS(name, res_type, parse_function, convert_macro) \
-	DEFINE_PARSER(parse_##name, res_type, parse_function, convert_macro, default_filter)\
-	DEFINE_PARSER(parse_decimal_##name, res_type, parse_function, convert_macro, decimal_filter)\
-	DEFINE_PARSER(parse_unsigned_##name, res_type, parse_function, convert_macro, unsigned_default_filter)\
-	DEFINE_PARSER(parse_unsigned_decimal_##name, res_type, parse_function, convert_macro, unsigned_decimal_filter)
+#define int_stub strtol
+#define float_stub strtod
 
-// DEFINE_PARSERS(long_double, long double, strtold, DBL2NUM);
-DEFINE_PARSERS(double, double, strtod, DBL2NUM);
-DEFINE_PARSERS(float, float, strtof, DBL2NUM);
+DEFINE_PARSER(parse_double, double, strtod, int_stub, DBL2NUM, 1);
+DEFINE_PARSER(parse_float,  float,  strtof, int_stub, DBL2NUM, 1);
+DEFINE_PARSER(parse_int32, long,                        float_stub, strtol,   INT2NUM,  0);
+DEFINE_PARSER(parse_unsigned_int32, unsigned long,      float_stub, strtoul,  UINT2NUM, 0);
+DEFINE_PARSER(parse_int64, long long,                   float_stub, strtoll,  LL2NUM,   0);
+DEFINE_PARSER(parse_unsigned_int64, unsigned long long, float_stub, strtoull, ULL2NUM,  0);
 
-#undef DEFINE_PARSER
-#undef DEFINE_PARSERS
-
-#define DEFINE_PARSER(parser_name, res_type, parse_function, convert_macro, filter, base) \
-	static VALUE parser_name(VALUE self, VALUE ctx) {\
-		char* pointer;\
-		char* tail;\
-		struct strscanner* ss;\
-		res_type res;\
-		Data_Get_Struct(ctx, struct strscanner, ss);\
-		pointer = RSTRING_PTR(ss->str) + ss->curr;\
-		filter;\
-		res = parse_function(pointer, &tail, base);\
-		if (tail == pointer) {\
-			return invalid;\
-		} else {\
-			ss->prev = ss->curr;\
-			ss->curr += (tail - pointer);\
-			return convert_macro(res);\
-		}\
-	}
-
-DEFINE_PARSER(parse_int32, long,                        strtol,   INT2NUM,  minimal_filter, 10);
-DEFINE_PARSER(parse_unsigned_int32, unsigned long,      strtoul,  UINT2NUM, minimal_filter, 10);
-DEFINE_PARSER(parse_int64, long long,                   strtoll,  LL2NUM,   minimal_filter, 10);
-DEFINE_PARSER(parse_unsigned_int64, unsigned long long, strtoull, ULL2NUM,  minimal_filter, 10);
+#undef int_stub
+#undef float_stub
 
 #undef DEFINE_PARSER
-#undef unsigned_default_filter
-#undef unsigned_decimal_filter
-#undef default_filter
-#undef decimal_filter
-#undef minimal_filter
 
 
 // -----------------------------------------------------------------------------
@@ -508,27 +473,19 @@ void Init_predef() {
 	ID_parse = rb_intern("_parse");
 	rb_include_module(predef, rsec);
 
-#	define DEFINE_PARSE_CLASSES(name, type_name) \
-		rb_define_method(rb_define_class_under(rsec, name, predef), "_parse", parse_##type_name, 1);\
-		rb_define_method(rb_define_class_under(rsec, "DECIMAL_" name, predef), "_parse", parse_decimal_##type_name, 1);\
-		rb_define_method(rb_define_class_under(rsec, "UNSIGNED_" name, predef), "_parse", parse_unsigned_##type_name, 1);\
-		rb_define_method(rb_define_class_under(rsec, "UNSIGNED_DECIMAL_" name, predef), "_parse", parse_unsigned_decimal_##type_name, 1);
-	DEFINE_PARSE_CLASSES("DOUBLE", double);
-	DEFINE_PARSE_CLASSES("FLOAT", float);
-#	undef DEFINE_PARSE_CLASSES
-
-#	define DEFINE_PARSE_CLASSES(name, type_name) \
-		rb_define_method(rb_define_class_under(rsec, name, predef), "_parse", parse_##type_name, 1);\
-		rb_define_method(rb_define_class_under(rsec, "UNSIGNED_" name, predef), "_parse", parse_unsigned_##type_name, 1);
-	DEFINE_PARSE_CLASSES("INT32", int32);
-	DEFINE_PARSE_CLASSES("INT64", int64);
-#	undef DEFINE_PARSE_CLASSES
-
 	// -----------------------------------------------------------------------------
-	// redefine some parse methods
+	// redefine parse methods
 
 #	define REDEFINE(klass_name, method) \
 	rb_define_method(rb_const_get(rsec, rb_intern(klass_name)), "_parse", method, 1)
+
+	REDEFINE("PDouble", parse_double);
+	REDEFINE("PFloat", parse_float);
+	REDEFINE("PInt32", parse_int32);
+	REDEFINE("PInt64", parse_int64);
+	REDEFINE("PUnsignedInt32", parse_unsigned_int32);
+	REDEFINE("PUnsignedInt64", parse_unsigned_int64);
+
 	REDEFINE("Seq", parse_seq);
 	REDEFINE("Or", parse_or);
 	REDEFINE("FixString", parse_string);
@@ -545,6 +502,7 @@ void Init_predef() {
 	REDEFINE("SpacedOneOf", parse_spaced_one_of);
 	REDEFINE("Join", parse_join);
 	REDEFINE("Map", parse_map);
+
 #	undef REDEFINE
 }
 

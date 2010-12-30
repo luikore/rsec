@@ -6,7 +6,7 @@ include Rsec::Helpers
 
 def s_exp
   id    = /[a-zA-Z][\w\-]*/.r
-  num   = /[\+\-]?\d+(\.\d+)?/.r.map &:to_f
+  num   = /[\+\-]?\d+(\.\d+)?/.r.map(&:to_f)
   space = /\s+/.r.skip
 
   exp   = nil

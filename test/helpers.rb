@@ -17,7 +17,7 @@ module Test::Unit::Assertions
   def asr
     assert_raise(Rsec::ParseError) { yield }
   end
-  # assert parse returns the string
+  # assert parse returns s
   def asp s, p
     assert_equal(s, p.parse(s))
   end

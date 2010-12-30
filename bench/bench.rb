@@ -7,6 +7,7 @@ s = '(3+24/5)/10-3*4+((82321+12-3)-3*4+(82321+12-3))/5'
 
 # rsec
 $:.unshift "#{File.dirname(__FILE__)}/../lib"
+$:.unshift "#{File.dirname(__FILE__)}/../ext"
 require "#{File.dirname(__FILE__)}/../examples/arithmetic"
 require "#{File.dirname(__FILE__)}/../examples/arithmetic_rpn"
 
@@ -16,6 +17,14 @@ require "#{File.dirname(__FILE__)}/little.rb"
 
 require "benchmark"
 
+def measure &proc
+  puts proc[]
+  200.times &proc
+  puts((Benchmark.measure{
+    1000.times &proc
+  }), '')
+end
+
 # ------------------------------------------------------------------------------
 
 puts ''
@@ -24,38 +33,19 @@ puts ''
 
 print 'rsec result:', "\t"
 p = arithmetic()
-puts p.parse! s
-puts((Benchmark.measure{
-  1000.times {
-    p.parse! s
-  }
-}), '')
+measure{ p.parse! s }
 
 print 'rsec rpn:', "\t"
 p = arithmetic_rpn()
-p p.parse! s
-puts((Benchmark.measure{
-  1000.times {
-    p.parse! s
-  }
-}), '')
+measure{ p.parse! s }
 
 print 'treetop result:', "\t"
 t = ArithmeticParser.new
-puts t.parse(s).value
-puts((Benchmark.measure {
-  1000.times {
-    t.parse(s).value
-  }
-}), '')
+measure{ t.parse(s).value }
 
 puts 'treetop without calculation'
 t = ArithmeticParser.new
-puts((Benchmark.measure {
-  1000.times {
-    t.parse s
-  }
-}), '')
+measure{ t.parse s }
 
 PARSEC_ARITH_SO = "#{File.dirname(__FILE__)}/parsec/Arithmetic.so"
 if File.exist?(PARSEC_ARITH_SO)
@@ -63,17 +53,12 @@ if File.exist?(PARSEC_ARITH_SO)
   require 'dl/types'
   module Arithmetic
     extend DL::Importer
-    dlload "#{File.dirname(__FILE__)}/parsec/Arithmetic.so"
+    dlload PARSEC_ARITH_SO
     extern "long calculate(char *)", :stdcall
     extern "long donothing(char *)", :stdcall
   end
   print 'parsec result:', "\t"
-  puts Arithmetic.calculate s
-  puts((Benchmark.measure {
-    1000.times {
-      Arithmetic.calculate s
-    }
-  }), '')
+  measure{ Arithmetic.calculate s }
 else
   puts 'parsec benchmark requires ghc installation. cd bench/parsec and run make.sh(unix) or make.bat(windows)'
 end
