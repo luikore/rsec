@@ -10,7 +10,7 @@ def arithmetic_rpn
     s.to_s.r >> value(s.to_proc)
   }
 
-  num  = (prim(:double) rescue (/[\+\-]?\d+(?:\.\d+)?/.r.map(&:to_f)))
+  num  = prim :double
   term = num | lazy{expr}.wrap_('()')
   # build operator table
   expr = term.join_infix_operators(

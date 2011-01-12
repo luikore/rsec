@@ -6,9 +6,9 @@ class Scheme
 
   def initialize
     spacee  = /\s*/.r.skip
-    boolean = /\#[tf]/.    r.map {|n| ValueNode[n=='#t'] }
-    integer = /0|[1-9]\d*/.r.map {|n| ValueNode[n.to_i]  }
-    id      = /[^\s\(\)\[\]]+/.r.map {|n|
+    boolean = /\#[tf]/.    r {|n| ValueNode[n=='#t'] }
+    integer = /0|[1-9]\d*/.r {|n| ValueNode[n.to_i]  }
+    id      = /[^\s\(\)\[\]]+/.r {|n|
                 def n.eval bind, *xs
                   bind[self]
                 end

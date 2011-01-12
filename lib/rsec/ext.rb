@@ -125,11 +125,13 @@ end
 
 class String
   # overwrite string-to-parser transformer
-  define_method ::Rsec::TO_PARSER_METHOD do
-    if self.bytesize == 1
-      ::Rsec::Byte[self]
-    else
-      ::Rsec::FixString[self]
-    end
-  end
+  define_method ::Rsec::TO_PARSER_METHOD, ->(&p){
+    parser = \
+      if self.bytesize == 1
+        ::Rsec::Byte[self]
+      else
+        ::Rsec::FixString[self]
+      end
+    p ? parser.map(&p) : parser
+  }
 end

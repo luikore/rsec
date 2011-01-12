@@ -26,7 +26,7 @@ class SlowJSON
   end
 
   def chars_parser
-    unicode_bytes = /[0-9a-f]{4}/i.r.map{|bytes|
+    unicode_bytes = /[0-9a-f]{4}/i.r{|bytes|
       [bytes].pack('H*').force_encoding('utf-16be').encode!('utf-8')
     }
     escape_char = '"'.r | "\\".r | '/'.r |

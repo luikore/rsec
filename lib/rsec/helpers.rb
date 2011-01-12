@@ -209,17 +209,19 @@ end
 # String#r: convert self to parser
 class String
   # convienient string-to-parser transformer
-  define_method ::Rsec::TO_PARSER_METHOD do
-    ::Rsec::Pattern[/#{Regexp.escape self}/]
-  end
+  define_method ::Rsec::TO_PARSER_METHOD, ->(&p){
+    parser = ::Rsec::Pattern[/#{Regexp.escape self}/]
+    p ? parser.map(&p) : parser
+  }
 end
 
 # Regexp#r: convert self to parser
 class Regexp
   # convienient regexp-to-parser transformer
-  define_method ::Rsec::TO_PARSER_METHOD do
-    ::Rsec::Pattern[self]
-  end
+  define_method ::Rsec::TO_PARSER_METHOD, ->(&p){
+    parser = ::Rsec::Pattern[self]
+    p ? parser.map(&p) : parser
+  }
 end
 
 # Array#r: convert self to sequence parser
@@ -231,26 +233,14 @@ class Array
   #   ['a', 'b', 'c'].r skip:(/\ /).parse('a b c')
   #   # => ['a', 'b', 'c']
   # </pre>
-  if ::Rsec::TO_PARSER_METHOD == :r
-    def r opts={}
-      if opts[:skip]
-        parser = ::Rsec::SeqInnerSkip[*self.map{|p|::Rsec.make_parser p}]
-        parser.inner_skip = ::Rsec.make_parser opts[:skip]
-      else
-        parser = ::Rsec::Seq[*self.map{|p|::Rsec.make_parser p}]
-      end
-      parser
+  define_method ::Rsec::TO_PARSER_METHOD, ->(opts={}, &p){
+    if opts[:skip]
+      parser = ::Rsec::SeqInnerSkip[*self.map{|p|::Rsec.make_parser p}]
+      parser.inner_skip = ::Rsec.make_parser opts[:skip]
+    else
+      parser = ::Rsec::Seq[*self.map{|p|::Rsec.make_parser p}]
     end
-  else
-    def rsec opts={}
-      if opts[:skip]
-        parser = ::Rsec::SeqInnerSkip[*self.map{|p|::Rsec.make_parser p}]
-        parser.inner_skip = ::Rsec.make_parser opts[:skip]
-      else
-        parser = ::Rsec::Seq[*self.map{|p|::Rsec.make_parser p}]
-      end
-      parser
-    end
-  end
+    p ? parser.map(&p) : parser
+  }
 end
 
