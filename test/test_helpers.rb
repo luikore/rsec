@@ -13,6 +13,10 @@ class THelpers < TC
     p1 = '4'.r
     asp '3', p2
     asp '4', p3
+
+    p2 = lazy{p7} # later is also ok !
+    p7 = '5'.r
+    asp '5',p2
   end
   
   def test_eof

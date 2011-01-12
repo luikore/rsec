@@ -43,17 +43,22 @@ static int is_hex(char* pointer) {
 		VALUE* data = RSTRUCT_PTR(self);\
 		res_type res;\
 		Data_Get_Struct(ctx, struct strscanner, ss);\
+		if (ss->curr >= RSTRING_LEN(ss->str)) return invalid;\
 		pointer = RSTRING_PTR(ss->str) + ss->curr;\
 		first_char = pointer[0];\
 		if (isspace(first_char)) return invalid;\
 		switch(data[0]) {\
 			case INT2FIX(0):\
 				if (first_char == '+' || first_char == '-') return invalid;\
+				break;\
 			case INT2FIX(1):\
 				if (first_char == '+') return invalid;\
+				break;\
 			case INT2FIX(2):\
 				if (first_char == '-') return invalid;\
+				break;\
 		}\
+		/* TODO limit check */\
 		if (int_parse_function) {\
 			char* hex_check_ptr = pointer;\
 			if (first_char == '+' || first_char == '-') hex_check_ptr++;\

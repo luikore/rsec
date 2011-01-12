@@ -15,7 +15,6 @@ class Scheme
                 n
               }
     atom    = boolean | integer | id
-    list    = nil # declare for lazy
     cell    = atom | lazy{list}
     list    = spacee.join(cell).wrap('()').map {|n| ListNode[*n] }
     cells   = spacee.join(cell).map {|n| ListNode[*n] }

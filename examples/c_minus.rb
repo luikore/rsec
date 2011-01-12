@@ -20,8 +20,8 @@ class CMinus
 
   # call(function apply) expression
   def call expr
-    args = expr.join ','.r.skip
-    seq(ID, '(', args._?, ')')
+    args = expr.join /\s*,\s*/.r.skip
+    [ID, SPACE, args._?.wrap_('()')].r
   end
 
   # binary arithmetic
@@ -37,22 +37,20 @@ class CMinus
   
   # (binary) expression
   def expression
-    expr = nil
     _expr = lazy{expr}
     
-    var = seq(ID, seq('[', _expr, ']')._?)
-    factor = '('.r >> _expr << ')' | call(_expr) | var | INT
+    var = [ID, SPACE, _expr.wrap_('[]')._?].r
+    factor = _expr.wrap_('()') | call(_expr) | var | INT
     expr = seq(var, '=', _expr) | binary_arithmetic(factor)
     # p expr.parse! "gcd(v,u-u/v*v)"
     expr
   end
     
   # statement parser builder, returns [stmt, block]
-  def statement local_decls
+  def statement var_decl
     expr = expression()
-    brace = '('.r >> SPACE >> expr << SPACE << ')'
+    brace = expr.wrap_('()')
     # statement
-    stmt = nil
     _stmt = lazy{stmt} # to reduce the use of lazy{}
     
     expr_stmt = expr << EOSTMT | EOSTMT
@@ -60,8 +58,7 @@ class CMinus
     if_stmt = seq('if', brace, _stmt, else_stmt._?)
     while_stmt = seq('while', brace, _stmt)
     return_stmt = [/return\s+/, expr._?].r << EOSTMT
-    stmt_list = _stmt.join(SPACE)._?
-    block = seq('{', local_decls, stmt_list, '}')
+    block = [SPACE.join(var_decl), SPACE.join(_stmt)].r.wrap_ '{}'
     stmt = block | if_stmt | while_stmt | return_stmt | expr_stmt
     [stmt, block]
   end
@@ -74,10 +71,7 @@ class CMinus
     # p var_decl.parse! 'int a[12];'
     # p var_decl.parse! 'int a;'
 
-    local_decls = var_decl.join(SPACE)._?
-    # p local_decls.parse! "int a; \nint b;"
-
-    stmt, block = statement(local_decls)
+    stmt, block = statement(var_decl)
     # p block.parse! "{int a;}"
     # p stmt.parse! 'gcd(v,u-u/v*v);'
     
@@ -85,12 +79,7 @@ class CMinus
     params = param.join(/\s*,\s*/.r.skip) | 'void'
     brace = params.wrap_ '()'
     fun_decl = seq(type_id, brace, block)
-    
-    decl_list = (fun_decl | var_decl).join SPACE
-    # p decl_list.parse! "int v(int a, int c){}"
-
-    @program = (SPACE >> decl_list << SPACE).eof
-    # p decl_list.parse! "int v(int a, int c){}"
+    @program = SPACE.join(fun_decl | var_decl).eof
   end
   
   attr_reader :program

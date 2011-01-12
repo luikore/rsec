@@ -11,7 +11,6 @@ def arithmetic_rpn
   }
 
   num  = (prim(:double) rescue (/[\+\-]?\d+(?:\.\d+)?/.r.map(&:to_f)))
-  expr = nil # declare for lazy
   term = num | lazy{expr}.wrap_('()')
   # build operator table
   expr = term.join_infix_operators(

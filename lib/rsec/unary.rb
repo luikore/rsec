@@ -136,9 +136,16 @@ module Rsec
   end
 
   # dynamic parser
+  # NOTE it could be rather slow
   class Dynamic < Unary
     def _parse ctx
-      some()[]._parse ctx
+      parser = \
+        begin
+          some()[]
+        rescue NameError => ex
+          some().binding.eval ex.name.to_s
+        end
+      parser._parse ctx
     end
   end
 
@@ -148,7 +155,12 @@ module Rsec
   #      if want to capture it everytime, use dynamic
   class Lazy < Unary
     def _parse ctx
-      @some ||= some()[]
+      @some ||= \
+        begin
+          some()[]
+        rescue NameError => ex
+          some().binding.eval ex.name.to_s
+        end
       @some._parse ctx
     end
   end
