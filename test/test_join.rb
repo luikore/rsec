@@ -23,4 +23,9 @@ class TMisc < TC
     p = /\d/.r.join '+'.r.skip
     ase ['3','4','2'], p.parse('3+4+2')
   end
+
+  def test_nest_join
+    p = 'a'.r.join(/\s*\*\s*/.r).join(/\s*\+\s*/.r)
+    ase [['a'], ' + ', ['a', ' * ', 'a'], ' +', ['a']], p.parse('a + a * a +a')
+  end
 end

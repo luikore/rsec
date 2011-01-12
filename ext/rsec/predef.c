@@ -365,7 +365,7 @@ static VALUE parse_one_of(VALUE self, VALUE ctx) {
 	Data_Get_Struct(ctx, struct strscanner, ss);
 	limit = RSTRING_LEN(ss->str);
 	if (ss->curr >= limit) return invalid;
-	chr = RSTRING_PTR(ss->str)[0];
+	chr = RSTRING_PTR(ss->str)[ss->curr];
 	for (i = 0; i < len; i++) {
 		if (chr == ptr[i]) {
 			ss->curr ++;

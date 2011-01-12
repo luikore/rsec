@@ -5,6 +5,8 @@ class TOneOf < TC
     p = one_of('abcd')
     ase 'c', p.parse('c')
     ase INVALID, p.parse('e')
+    p = one_of('+=')
+    ase '=', p.parse('=')
   end
 
   def test_one_of_
@@ -15,4 +17,12 @@ class TOneOf < TC
     ase 'a', p.parse(' a')
     ase 'c', p.parse('c ')
   end
+
+  def test_one_of_and_fall
+    p = one_of_('+-') << 'b'
+    ase '-', p.parse('-b')
+    p = 'a'.r >> one_of('+-')
+    ase '-', p.parse('a-')
+  end
+
 end
