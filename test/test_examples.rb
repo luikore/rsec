@@ -1,5 +1,4 @@
-$:.unshift File.dirname __FILE__
-require "helpers"
+require "#{File.dirname(__FILE__)}/helpers.rb"
 $:.unshift File.expand_path "#{File.dirname __FILE__}/../examples"
 require "arithmetic"
 require "arithmetic_rpn"

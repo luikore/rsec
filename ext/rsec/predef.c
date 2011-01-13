@@ -41,9 +41,11 @@ static int is_hex(char* pointer) {
 		struct strscanner* ss;\
 		char first_char;\
 		VALUE* data = RSTRUCT_PTR(self);\
+		int limit;\
 		res_type res;\
 		Data_Get_Struct(ctx, struct strscanner, ss);\
-		if (ss->curr >= RSTRING_LEN(ss->str)) return invalid;\
+		limit = RSTRING_LEN(ss->str);\
+		if (ss->curr >= limit) return invalid;\
 		pointer = RSTRING_PTR(ss->str) + ss->curr;\
 		first_char = pointer[0];\
 		if (isspace(first_char)) return invalid;\
@@ -58,8 +60,7 @@ static int is_hex(char* pointer) {
 				if (first_char == '-') return invalid;\
 				break;\
 		}\
-		/* TODO limit check */\
-		if (int_parse_function) {\
+		if (is_floating) {\
 			char* hex_check_ptr = pointer;\
 			if (first_char == '+' || first_char == '-') hex_check_ptr++;\
 			if (data[1] == Qtrue) /* true: hex */ \
@@ -75,9 +76,16 @@ static int is_hex(char* pointer) {
 		if (tail == pointer) {\
 			return invalid;\
 		} else {\
-			ss->prev = ss->curr;\
-			ss->curr += (tail - pointer);\
-			return convert_macro(res);\
+			int distance = tail - pointer; /* tail points to the next char of the last char of the number */ \
+			if (ss->curr + distance > limit) {\
+				return invalid;\
+			} else if (errno == ERANGE) { /* out of range error */ \
+				return invalid;\
+			} else {\
+				ss->prev = ss->curr;\
+				ss->curr += distance;\
+				return convert_macro(res);\
+			}\
 		}\
 	}
 
@@ -88,8 +96,9 @@ DEFINE_PARSER(parse_double, double, strtod, int_stub, DBL2NUM, 1);
 DEFINE_PARSER(parse_float,  float,  strtof, int_stub, DBL2NUM, 1);
 DEFINE_PARSER(parse_int32, long,                        float_stub, strtol,   INT2NUM,  0);
 DEFINE_PARSER(parse_unsigned_int32, unsigned long,      float_stub, strtoul,  UINT2NUM, 0);
-DEFINE_PARSER(parse_int64, long long,                   float_stub, strtoll,  LL2NUM,   0);
-DEFINE_PARSER(parse_unsigned_int64, unsigned long long, float_stub, strtoull, ULL2NUM,  0);
+// VC has no strtoll / strtoull
+// DEFINE_PARSER(parse_int64, long long,                   float_stub, strtoll,  LL2NUM,   0);
+// DEFINE_PARSER(parse_unsigned_int64, unsigned long long, float_stub, strtoull, ULL2NUM,  0);
 
 #undef int_stub
 #undef float_stub
@@ -469,8 +478,14 @@ VALUE parse_map(VALUE self, VALUE ctx) {
 // -----------------------------------------------------------------------------
 // init
 
-
-void Init_predef() {
+#ifdef __cplusplus
+extern "C"
+#endif
+void
+#ifdef _WIN32
+__declspec(dllexport)
+#endif
+Init_predef() {
 	VALUE rsec = rb_define_module("Rsec");
 	VALUE predef = rb_define_class_under(rsec, "Predef", rb_cObject);
 	invalid = rb_const_get(rsec, rb_intern("INVALID"));
@@ -487,9 +502,9 @@ void Init_predef() {
 	REDEFINE("PDouble", parse_double);
 	REDEFINE("PFloat", parse_float);
 	REDEFINE("PInt32", parse_int32);
-	REDEFINE("PInt64", parse_int64);
+	// REDEFINE("PInt64", parse_int64);
 	REDEFINE("PUnsignedInt32", parse_unsigned_int32);
-	REDEFINE("PUnsignedInt64", parse_unsigned_int64);
+	// REDEFINE("PUnsignedInt64", parse_unsigned_int64);
 
 	REDEFINE("Seq", parse_seq);
 	REDEFINE("Or", parse_or);

@@ -34,21 +34,15 @@ module Rsec
   end
 
   # combine fall and value
-  class FallValue < Binary
-  end
+  class FallValue < Binary; end
 
-  class PDouble < Binary
-  end
-  class PFloat < Binary
-  end
-  class PInt32 < Binary
-  end
-  class PInt64 < Binary
-  end
-  class PUnsignedInt32 < Binary
-  end
-  class PUnsignedInt64 < Binary
-  end
+  class PDouble < Binary; end
+  class PFloat < Binary; end
+  class PInt32 < Binary; end
+  class PUnsignedInt32 < Binary; end
+  # VC has no strtoll and strtoull
+  # class PInt64 < Binary; end
+  # class PUnsignedInt64 < Binary; end
 
   module Helpers
     # primitive parser, returns nil if overflow or underflow. <br/>
@@ -81,10 +75,10 @@ module Rsec
       
       sign_strategy = \
         case (options[:allowed_sign] or options[:allowed_signs])
-        when nil, ''; 3
+        when nil, '+-', '-+'; 3
         when '+'; 2
         when '-'; 1
-        when '+-', '-+'; 0
+        when ''; 0
         else raise "allowed_sign should be one of nil, '', '+', '-', '+-', '-+'"
         end
 
@@ -94,9 +88,11 @@ module Rsec
       when :hex_double; PDouble.new sign_strategy, true # hex
       when :hex_float;  PFloat.new sign_strategy, true
       when :int32;  PInt32.new sign_strategy, base
-      when :int64;  PInt64.new sign_strategy, base
-      when :unsigned_int32; PUnsignedInt32.new sign_strategy, base
-      when :unsigned_int64; PUnsignedInt64.new sign_strategy, base
+      when :unsigned_int32;
+        raise 'unsigned int not allow - sign' if options[:allowed_signs] =~ /-/
+        PUnsignedInt32.new sign_strategy, base
+      # when :int64;  PInt64.new sign_strategy, base
+      # when :unsigned_int64; PUnsignedInt64.new sign_strategy, base
       else; raise "Invalid primitive type #{type}"
       end
     end
