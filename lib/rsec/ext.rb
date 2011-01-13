@@ -64,7 +64,7 @@ module Rsec
     #   :allowed_signs   (same as :allowed_sign)
     #   :base => integer (integers only, default is 10)
     # </pre>
-    def prim type, options={}
+    def prim type, options={}, &p
       base = options[:base]
       if [:double, :hex_double, :float, :hex_float].index base
         raise 'Floating points does not allow :base'
@@ -82,19 +82,21 @@ module Rsec
         else raise "allowed_sign should be one of nil, '', '+', '-', '+-', '-+'"
         end
 
-      case type
-      when :double; PDouble.new sign_strategy, false # decimal
-      when :float;  PFloat.new sign_strategy, false
-      when :hex_double; PDouble.new sign_strategy, true # hex
-      when :hex_float;  PFloat.new sign_strategy, true
-      when :int32;  PInt32.new sign_strategy, base
-      when :unsigned_int32;
-        raise 'unsigned int not allow - sign' if options[:allowed_signs] =~ /-/
-        PUnsignedInt32.new sign_strategy, base
-      # when :int64;  PInt64.new sign_strategy, base
-      # when :unsigned_int64; PUnsignedInt64.new sign_strategy, base
-      else; raise "Invalid primitive type #{type}"
-      end
+      parser = \
+        case type
+        when :double; PDouble.new sign_strategy, false # decimal
+        when :float;  PFloat.new sign_strategy, false
+        when :hex_double; PDouble.new sign_strategy, true # hex
+        when :hex_float;  PFloat.new sign_strategy, true
+        when :int32;  PInt32.new sign_strategy, base
+        when :unsigned_int32;
+          raise 'unsigned int not allow - sign' if options[:allowed_signs] =~ /-/
+          PUnsignedInt32.new sign_strategy, base
+        # when :int64;  PInt64.new sign_strategy, base
+        # when :unsigned_int64; PUnsignedInt64.new sign_strategy, base
+        else; raise "Invalid primitive type #{type}"
+        end
+      p ? parser.map(&p) : parser
     end
   end
 
