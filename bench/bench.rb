@@ -57,9 +57,9 @@ if File.exist?(PARSEC_ARITH_SO)
     extern "long calculate(char *)", :stdcall
     extern "long donothing(char *)", :stdcall
   end
-  print 'parsec result:', "\t"
+  print 'Haskell Parsec result:', "\t"
   measure{ Arithmetic.calculate s }
 else
-  puts 'parsec benchmark requires ghc installation. cd bench/parsec and run make.sh(unix) or make.bat(windows)'
+  puts 'Haskell Parsec benchmark requires ghc installation. cd bench/parsec and run make.sh(unix) or make.bat(windows)'
 end
 

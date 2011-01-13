@@ -6,6 +6,7 @@ class TPrim < TC
   def test_floating
     [:double, :float].each do |ty|
       p = prim ty
+      ase INVALID, p.parse('d')
       ase 3.2e5.round, p.parse('+3.2e5').round
       ase INVALID, p.parse(' 4.8')
 
@@ -15,6 +16,7 @@ class TPrim < TC
 
       p = prim ty, allowed_sign: '-'
       ase (-5.0).round, p.parse('-5').round
+      ase INVALID, p.parse('-')
       ase INVALID, p.parse('+5')
       ase 5.0.round, p.parse('5').round
     end
@@ -38,9 +40,12 @@ class TPrim < TC
     p = prim :int32, allowed_signs: '-'
     ase INVALID, p.parse('+12')
     ase INVALID, p.parse('123333333333333333333333333333333333')
+    ase INVALID, p.parse('-')
+    ase -49, p.parse('-49')
 
     assert_raise RuntimeError do
       prim :unsigned_int32, allowed_signs: '+-'
     end
   end
 end
+

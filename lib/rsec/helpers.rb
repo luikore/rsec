@@ -10,45 +10,55 @@ module Rsec
 
     # lazy parser
     def lazy &p
+      raise 'lazy() requires a block' unless p
       Lazy[p]
     end
 
     # dynamic parser
     def dynamic &p
+      raise 'dynamic() requires a block' unless p
       Dynamic[p]
     end
 
     # value parser (accept any input, don't advance ctx and return value x)
-    def value x
-      Value[x]
+    def value x, &p
+      parser = Value[x]
+      p ? parser.map(&p) : parser
     end
 
     # beginning of line parser
-    def bol default_return=SKIP
-      Bol[default_return]
+    def bol default_return=SKIP, &p
+      parser = Bol[default_return]
+      p ? parser.map(&p) : parser
     end
     
     # move scan pos n characters<br/>
     # n can be negative
-    def skip_n n
-      SkipN[n]
+    def skip_n n, &p
+      parser = SkipN[n]
+      p ? parser.map(&p) : parser
     end
 
-    def one_of str
+    def one_of str, &p
       raise 'should be string' unless str.is_a?(String)
       raise 'str len should > 0' if str.empty?
       raise 'str should be ascii' unless str.bytesize == str.size
-      OneOf[str.dup.freeze]
+      parser = OneOf[str.dup.freeze]
+      p ? parser.map(&p) : parser
     end
 
-    def one_of_ str
+    def one_of_ str, &p
       raise 'should be string' unless str.is_a?(String)
       raise 'str len should > 0' if str.empty?
       raise 'str should be ascii' unless str.bytesize == str.size
       raise 'str should not contain space' if str =~ /\s/
-      SpacedOneOf[str.dup.freeze]
+      parser = SpacedOneOf[str.dup.freeze]
+      p ? parser.map(&p) : parser
     end
 
+    def prim sym, opts={}
+      raise 'Build C-extension to use this helper'
+    end
   end
 
   # robust

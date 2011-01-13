@@ -42,7 +42,7 @@ class SlowJSON
   def generate_parser
     string  = (chars_parser ** 0).map(&:join).wrap('""')
     # -? int frac? exp?
-    number  = prim(:double, allowed_sign: '-') rescue puts 'need ext to be built'
+    number  = prim(:double, allowed_sign: '-')
     @value  = string | number | lazy{@object} | lazy{@array} |
               'true'.r  >> value(true) |
               'false'.r >> value(false) |
