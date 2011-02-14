@@ -1,7 +1,5 @@
 require "#{File.dirname(__FILE__)}/helpers.rb"
 
-# NOTE this test requires ext.rb and predef.so
-
 class TPrim < TC
   def test_floating
     [:double, :float].each do |ty|
@@ -19,6 +17,10 @@ class TPrim < TC
       ase INVALID, p.parse('-')
       ase INVALID, p.parse('+5')
       ase 5.0.round, p.parse('5').round
+      
+      # with map block
+      p = prim(ty){|x| x * 2 }
+      ase 100.0.round, p.parse('50').round
     end
   end
 
@@ -26,6 +28,10 @@ class TPrim < TC
     [:hex_double, :hex_float].each do |ty|
       p = prim ty
       ase Float('0x3.2').round(4), p.parse('0x3.2').round(4)
+
+      # with map block
+      p = prim(ty){|x| x - 0.1 }
+      ase (Float('0x3.2') - 0.1).round(4), p.parse('0x3.2').round(4)
     end
   end
 

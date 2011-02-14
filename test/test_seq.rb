@@ -2,7 +2,7 @@ require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class TSeq < TC
   def test_seq
-    p = ['a', 'b', 'c'].r
+    p = seq('a', 'b', 'c')
     ase ['a','b','c'], p.parse('abc')
     ase INVALID, p.parse('a')
     ase INVALID, p.parse('b')
@@ -12,20 +12,22 @@ class TSeq < TC
   end
 
   def test_seq_skip
-    p = %w[abc ef vv].r skip: /\s+/
+    p = seq_('abc', 'ef', 'vv')
+    ase %w[abc ef vv], p.parse("abc    ef vv")
+    p = seq_('abc', 'ef', 'vv', skip: /\s+/)
     ase %w[abc ef vv], p.parse("abc    ef vv")
     ase INVALID, p.parse("abcef vv")
   end
 
   def test_seq_mix
-    p = ['e', ['a','b','c'].r, 'd'].r
+    p = seq('e', seq('a','b','c'), 'd')
     ase ['e', ['a','b','c'], 'd'], p.parse('eabcd')
   end
   
   def test_seq_one
-    p = ['a', 'b', 'c'].r[1]
+    p = seq('a', 'b', 'c')[1]
     ase 'b', p.parse('abc')
-    p = ['abc', /\s*/.r.skip, 'd'].r[1]
+    p = seq('abc', /\s*/.r.skip, 'd')[1]
     ase 'd', p.parse('abc d')
   end
 end

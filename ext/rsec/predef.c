@@ -111,9 +111,10 @@ DEFINE_PARSER(parse_unsigned_int32, unsigned long,      float_stub, strtoul,  UI
 
 
 static VALUE parse_seq(VALUE self, VALUE ctx) {
-	VALUE* parsers = RARRAY_PTR(self);
+	VALUE arr = RSTRUCT_PTR(self)[0];
+	VALUE* parsers = RARRAY_PTR(arr);
 	if (parsers) {
-		int len = RARRAY_LEN(self);
+		int len = RARRAY_LEN(arr);
 		VALUE ret = rb_ary_new2(len);
 		// VALUE args[] = {Qnil, ctx};
 		int i;
@@ -134,10 +135,11 @@ static VALUE parse_seq(VALUE self, VALUE ctx) {
 	}
 }
 
-static VALUE parse_or(VALUE self, VALUE ctx) {
-	VALUE* parsers = RARRAY_PTR(self);
+static VALUE parse_branch(VALUE self, VALUE ctx) {
+	VALUE arr = RSTRUCT_PTR(self)[0];
+	VALUE* parsers = RARRAY_PTR(arr);
 	if (parsers) {
-		int len = RARRAY_LEN(self);
+		int len = RARRAY_LEN(arr);
 		int i, curr, prev;
 		struct strscanner* ss;
 		Data_Get_Struct(ctx, struct strscanner, ss);
@@ -239,54 +241,12 @@ static VALUE parse_skip_byte(VALUE self, VALUE ctx) {
 
 
 // -----------------------------------------------------------------------------
-// fast fall parsers
-
-
-static VALUE parse_fall_left(VALUE self, VALUE ctx) {
-	VALUE* data = RSTRUCT_PTR(self);
-	VALUE ret = data[0]; // left
-	ret = call_parse(ret, ctx);
-	if (ret == invalid) return invalid;
-	if (call_parse(data[1], ctx) == invalid) return invalid;
-	return ret;
-}
-
-static VALUE parse_fall_right(VALUE self, VALUE ctx) {
-	VALUE* data = RSTRUCT_PTR(self);
-	VALUE left = data[0];
-	if (call_parse(left, ctx) == invalid) return invalid;
-	return call_parse(data[1], ctx);
-}
-
-
-// -----------------------------------------------------------------------------
-// fast value parser
-
-
-static VALUE parse_value(VALUE self, VALUE ctx) {
-	return RSTRUCT_PTR(self)[0];
-}
-
-
-// -----------------------------------------------------------------------------
-// mixing fall and value
-
-
-static VALUE parse_fall_value(VALUE self, VALUE ctx) {
-	VALUE* data = RSTRUCT_PTR(self);
-	if (call_parse(data[0], ctx) != invalid)
-		return data[1];
-	return invalid;
-}
-
-
-// -----------------------------------------------------------------------------
 // parens enchance
 
 
 #define SKIP_SPACE(ptr) \
 	for(;;) {\
-		if (ss->curr >= limit) goto return_invalid;\
+		if (ss->curr >= limit) return invalid;\
 		if (! isspace(ptr[ss->curr])) break;\
 		ss->curr ++;\
 	}
@@ -300,30 +260,25 @@ static VALUE parse_wrap(VALUE self, VALUE ctx) {
 	VALUE res;
 	char* ptr;
 	int limit;
-	int save_point;
 
 	// prepare
 	Data_Get_Struct(ctx, struct strscanner, ss);
 	limit = RSTRING_LEN(ss->str);
 	ptr = RSTRING_PTR(ss->str);
-	save_point = ss->curr;
 
 	// start
 	if (ss->curr >= limit || ptr[ss->curr++] != start)
-		goto return_invalid;
+		return invalid;
 	// term
 	res = call_parse(data[0], ctx);
 	// end
 	if (res == invalid || ptr[ss->curr++] != end)
-		goto return_invalid;
+		return invalid;
 	return res;
-
-return_invalid:
-	ss->curr = save_point;
-	return invalid;
+	
 }
 
-static VALUE parse_wrap_space(VALUE self, VALUE ctx) {
+static VALUE parse_spaced_wrap(VALUE self, VALUE ctx) {
 	VALUE* data = RSTRUCT_PTR(self);
 	struct strscanner* ss;
 	char start = RSTRING_PTR(data[1])[0];
@@ -331,31 +286,26 @@ static VALUE parse_wrap_space(VALUE self, VALUE ctx) {
 	VALUE res;
 	char* ptr;
 	int limit;
-	int save_point;
 
 	// prepare
 	Data_Get_Struct(ctx, struct strscanner, ss);
 	limit = RSTRING_LEN(ss->str);
 	ptr = RSTRING_PTR(ss->str);
-	save_point = ss->curr;
 
 	// start
 	if (ss->curr >= limit || ptr[ss->curr++] != start)
-		goto return_invalid;
+		return invalid;
 	SKIP_SPACE(ptr);
 	// term
 	res = call_parse(data[0], ctx);
 	if (res == invalid)
-		goto return_invalid;
+		return invalid;
 	SKIP_SPACE(ptr);
 	// end
 	if (ptr[ss->curr++] != end)
-		goto return_invalid;
+		return invalid;
 	return res;
 
-return_invalid:
-	ss->curr = save_point;
-	return invalid;
 }
 
 
@@ -392,13 +342,11 @@ static VALUE parse_spaced_one_of(VALUE self, VALUE ctx) {
 	struct strscanner* ss;
 	int limit, i;
 	char chr;
-	int save_point;
 	char* ptr;
 
 	Data_Get_Struct(ctx, struct strscanner, ss);
 	limit = RSTRING_LEN(ss->str);
 	ptr = RSTRING_PTR(ss->str);
-	save_point = ss->curr;
 
 	SKIP_SPACE(ptr);
 	chr = ptr[ss->curr];
@@ -415,9 +363,6 @@ static VALUE parse_spaced_one_of(VALUE self, VALUE ctx) {
 			return rb_str_new(ret, 1);
 		}
 	}
-
-return_invalid:
-	ss->curr = save_point;
 	return invalid;
 }
 
@@ -507,17 +452,13 @@ Init_predef() {
 	// REDEFINE("PUnsignedInt64", parse_unsigned_int64);
 
 	REDEFINE("Seq", parse_seq);
-	REDEFINE("Or", parse_or);
+	REDEFINE("Branch", parse_branch);
 	REDEFINE("FixString", parse_string);
 	REDEFINE("Byte", parse_byte);
 	REDEFINE("SkipFixString", parse_skip_string);
 	REDEFINE("SkipByte", parse_skip_byte);
-	REDEFINE("FallLeft", parse_fall_left);
-	REDEFINE("FallRight", parse_fall_right);
-	REDEFINE("Value", parse_value);
-	REDEFINE("FallValue", parse_fall_value);
 	REDEFINE("Wrap", parse_wrap);
-	REDEFINE("WrapSpace", parse_wrap_space);
+	REDEFINE("SpacedWrap", parse_spaced_wrap);
 	REDEFINE("OneOf", parse_one_of);
 	REDEFINE("SpacedOneOf", parse_spaced_one_of);
 	REDEFINE("Join", parse_join);

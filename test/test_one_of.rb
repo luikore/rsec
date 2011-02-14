@@ -7,6 +7,16 @@ class TOneOf < TC
     ase INVALID, p.parse('e')
     p = one_of('+=')
     ase '=', p.parse('=')
+
+    begin
+      p = one_of('')
+      assert false, "should raise exception for empty string"
+    rescue
+    end
+
+    # with map block
+    p = one_of('x+'){|v| v * 2}
+    ase '++', p.parse('+')
   end
 
   def test_one_of_
@@ -16,13 +26,16 @@ class TOneOf < TC
     ase 'd', p.parse(' d ')
     ase 'a', p.parse(' a')
     ase 'c', p.parse('c ')
-  end
 
-  def test_one_of_and_fall
-    p = one_of_('+-') << 'b'
-    ase '-', p.parse('-b')
-    p = 'a'.r >> one_of('+-')
-    ase '-', p.parse('a-')
+    begin
+      p = one_of_('')
+      assert false, "should raise exception for empty string"
+    rescue
+    end
+
+    # with map block
+    p = one_of_('w'){'v'}
+    ase 'v', p.parse('w')
   end
 
 end
