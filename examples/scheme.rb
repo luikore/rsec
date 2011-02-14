@@ -1,4 +1,4 @@
-# A simple-as-shit scheme interpreter
+# A simple-as-shit scheme interpreter. Usage: ruby scheme.rb hello.scm
 require "rsec"
 
 class Scheme
@@ -11,10 +11,10 @@ class Scheme
       @parent = parent
     end
 
-    def define id, &p
-      self[id] = proc do |bind, xs|
+    def define id, &p # define lambda
+      self[id] = -> bind, xs {
         p[* xs.map{|x| bind.eval x }]
-      end
+      }
     end
 
     def eval node
@@ -43,10 +43,10 @@ class Scheme
     boolean = /\#[tf]/.    r {|n| Value[n=='#t'] }
     integer = /0|[1-9]\d*/.r {|n| Value[n.to_i]  }
     id      = /[^\s\(\)\[\]]+/.r
-    atom    = boolean | integer | id
-    cell    = atom | lazy{list}
-    list    = spacee.join(cell).wrap('()')
-    cells   = spacee.join(cell)
+    atom    = branch(boolean, integer, id)
+    cell    = branch(atom, lazy{list})
+    cells   = spacee.join cell
+    list    = cells.wrap('()')
     @parser = cells.eof
 
     @vm = Bind.new

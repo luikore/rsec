@@ -2,7 +2,7 @@
 # ------------------------------------------------------------------------------
 # Binary Combinators
 
-module Rsec
+module Rsec #:nodoc:
   # binary combinator base
   Binary = Struct.new :left, :right
   class Binary
@@ -190,127 +190,133 @@ module Rsec
 
   class Wrap < Binary
     def _parse ctx
-      save_point = ctx.pos
-      (ctx.pos = save_point and return INVALID) unless right[0] == ctx.getch
+      return INVALID unless right[0] == ctx.getch
       res = left._parse ctx
-      (ctx.pos = save_point and return INVALID) if INVALID[res]
-      (ctx.pos = save_point and return INVALID) unless right[1] == ctx.getch
+      return INVALID if INVALID[res]
+      return INVALID unless right[1] == ctx.getch
       res
     end
   end
 
-  class WrapSpace < Binary
+  class SpacedWrap < Binary
     def _parse ctx
-      save_point = ctx.pos
-      (ctx.pos = save_point and return INVALID) unless right[0] == ctx.getch
+      return INVALID unless right[0] == ctx.getch
       ctx.skip /\s*/
       res = left._parse ctx
-      (ctx.pos = save_point and return INVALID) if INVALID[res]
+      return INVALID if INVALID[res]
       ctx.skip /\s*/
-      (ctx.pos = save_point and return INVALID) unless right[1] == ctx.getch
+      return INVALID unless right[1] == ctx.getch
       res
     end
   end
 
-  # infix operator table
-  class ShuntingYard
-    include ::Rsec
+  # TODO the following parsers should be ajusted to more precised level
+  # NOTE these classes are designed for C-ext, so the ruby code look a little wierd
 
-    # unify operator table
-    def unify opt, is_left
-      (opt || {}).inject({}) do |h, (k, v)|
-        k = Rsec.make_parser k
-        h[k] = [v.to_i, is_left]
-        h
-      end
+  def Rsec.sign_strategy_to_pattern sign_strategy
+    case sign_strategy
+    when 3; '[\+\-]?'
+    when 2; '\+?'
+    when 1; '\-?'
+    when 0; ''
     end
+  end
 
-    def initialize term, opts
-      @term = term
-      @ops = unify(opts[:right], false)
-      @ops.merge! unify(opts[:left], true)
-
-      @space_before = opts[:space_before] || opts[:space] || /[\ \t]*/
-      @space_after = opts[:space_after] || opts[:space] || /\s*/
-      if @space_before.is_a?(String)
-        @space_before = /#{Regexp.escape @space_before}/
-      end
-      if @space_after.is_a?(String)
-        @space_after = /#{Regexp.escape @space_after}/
-      end
-
-      @ret_class = opts[:calculate] ? Pushy : Array
-    end
-
-    # TODO give it a better name
-    class Pushy < Array
-      # calculates on <<
-      def << op
-        right = pop()
-        left = pop()
-        push op[left, right]
-      end
-      # get first element
-      def to_a
-        raise 'fuck' if size != 1
-        first
-      end
-    end
-
-    # scan an operator from ctx
-    def scan_op ctx
-      save_point = ctx.pos
-      @ops.each do |parser, (precedent, is_left)|
-        ret = parser._parse ctx
-        if INVALID[ret]
-          ctx.pos = save_point
+  # double precision float parser
+  class PDouble < Binary
+    def initialize sign_strategy, is_hex
+      super(sign_strategy, is_hex)
+      sign = Rsec.sign_strategy_to_pattern sign_strategy
+      @pattern =
+        if is_hex
+          /#{sign}0x[\da-f]+(\.[\da-f]+)?/i
         else
-          return ret, precedent, is_left
+          /#{sign}\d+(\.\d+)?(e[\+\-]?\d+)?/i
         end
-      end
-      nil
     end
-    private :scan_op
 
     def _parse ctx
-      stack = []
-      ret = @ret_class.new
-      token = @term._parse ctx
-      return INVALID if INVALID[token]
-      ret.push token
-      loop do
-        save_point = ctx.pos
-
-        # parse operator
-        ctx.skip @space_before
-        # operator-1, precedent-1, is-left-associative
-        op1, pre1, is_left = scan_op ctx
-        break unless op1 # pos restored in scan_op
-        while top = stack.last
-          op2, pre2 = top
-          if (is_left and pre1 <= pre2) or (pre1 < pre2)
-            stack.pop
-            ret << op2 # tricky: Pushy calculates when <<
-          else
-            break
-          end
-        end
-        stack.push [op1, pre1]
-        
-        # parse term
-        ctx.skip @space_after
-        token = @term._parse ctx
-        if INVALID[token]
-          ctx.pos = save_point
-          break
-        end
-        ret.push token
-      end # loop
-
-      while top = stack.pop
-        ret << top[0]
+      if (d = ctx.scan @pattern)
+        d = Float(d)
+        return d if d.finite?
       end
-      ret.to_a # tricky: Pushy get the first thing out
+      INVALID
     end
   end
+
+  # single precision float parser
+  class PFloat < Binary
+    def initialize sign_strategy, is_hex
+      super(sign_strategy, is_hex)
+      sign = Rsec.sign_strategy_to_pattern sign_strategy
+      @pattern =
+        if is_hex
+          /#{sign}0x[\da-f]+(\.[\da-f]+)?/i
+        else
+          /#{sign}\d+(\.\d+)?(e[\+\-]?\d+)?/i
+        end
+    end
+
+    def _parse ctx
+      if (d = ctx.scan @pattern)
+        d = Float(d)
+        return d if d.finite? # TODO single pecision float check
+      end
+      INVALID
+    end
+  end
+
+  # 32-bit int parser
+  class PInt32 < Binary
+    def initialize sign_strategy, base
+      super(sign_strategy, base)
+      sign = Rsec.sign_strategy_to_pattern sign_strategy
+      if base > 10
+        d_hi = 9
+        char_range = "a-#{('a'.ord + base - 11).chr}"
+      else
+        d_hi = base - 1
+        char_range = ''
+      end
+      @pattern = /#{sign}[0-#{d_hi}#{char_range}]+/i
+    end
+
+    def _parse ctx
+      if (d = ctx.scan @pattern)
+        d = d.to_i right
+        return d if (-2147483648..2147483647).include?(d)
+      end
+      INVALID
+    end
+  end
+
+  # unsigned 32 bit int parser
+  class PUnsignedInt32 < Binary
+    def initialize sign_strategy, base
+      super(sign_strategy, base)
+      sign = Rsec.sign_strategy_to_pattern sign_strategy
+      if base > 10
+        d_hi = 9
+        char_range = "a-#{('a'.ord + base - 11).chr}"
+      else
+        d_hi = base - 1
+        char_range = ''
+      end
+      @pattern = /#{sign}[0-#{d_hi}#{char_range}]+/i
+    end
+
+    def _parse ctx
+      if (d = ctx.scan @pattern)
+        d = d.to_i right
+        return d if d < 4294967296
+      end
+      INVALID
+    end
+  end
+
+  # NOTE
+  # VC has no strtoll and strtoull
+  # class PInt64 < Binary; end
+  # class PUnsignedInt64 < Binary; end
+
 end

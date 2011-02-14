@@ -2,7 +2,7 @@
 # ------------------------------------------------------------------------------
 # Parser Base
 
-module Rsec
+module Rsec #:nodoc:
   # parses string<br/>
   # returns nil if unparsed
   def parse str, source_name='source'

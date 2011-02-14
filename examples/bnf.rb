@@ -1,20 +1,20 @@
 # BNF grammar parser
 # http://en.wikipedia.org/wiki/Backus-Naur_form
 
-require "../lib/rsec"
+require "rsec"
 
 include Rsec::Helpers
 
 def bnf
-  opt_space = /[\ \t]*/.r.skip
-  spacee    = /\s*/.r.skip # include \n
-  literal   = /".*?"|'.*?'/.r
-  rule_name = /\<.*?\>/.r 
-  term      = literal | rule_name
-  list      = term.join opt_space
-  expr      = list.join(opt_space >> '|' << opt_space)
-  rule      = [spacee, rule_name, '::=', expr, spacee].r(skip: opt_space)
-  (rule ** 1).eof
+  nbsp      = /[\ \t]*/.r
+  spacee    = /\s*/.r # include \n
+  literal   = /".*?"|'.*?'/
+  rule_name = /\<.*?\>/
+  term      = branch literal, rule_name
+  list      = term.join nbsp.skip
+  expr      = list.join seq(nbsp, '|', nbsp)[1]
+  rule      = seq_ rule_name, '::=', expr
+  spacee.join(rule).eof
 end
 
 require "pp"

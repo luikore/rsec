@@ -2,75 +2,80 @@
 # ------------------------------------------------------------------------------
 # x-nary combinators
 
-module Rsec
+module Rsec #:nodoc:
 
   # sequence combinator<br/>
   # result in an array
-  class Seq < Array
+  class Seq < Struct.new(:parsers)
     include ::Rsec
 
     def _parse ctx
       ret = []
-      each do |e|
+      parsers.each do |e|
         res = e._parse ctx
         return INVALID if INVALID[res]
         ret << res unless SKIP[res]
       end
       ret
-    end
-
-    def [] idx
-      raise 'index out of range' if idx >= size() or idx < 0
-      s1 = SeqOne[*self]
-      s1.idx = idx
-      s1
     end
   end
 
-  # skips a parser(@inner_skip) between tokens
-  class SeqInnerSkip < Array
+
+  # sequence combinator<br/>
+  # the result is the result of the parser at idx
+  class SeqOne < Struct.new(:parsers, :idx)
     include ::Rsec
-    attr_accessor :inner_skip
 
     def _parse ctx
-      ret = []
-      skipper = nil
-      each do |e|
-        # no skip first token
-        if skipper
-          return INVALID if INVALID[skipper._parse ctx]
-        end
-        res = e._parse ctx
+      ret = INVALID
+      counter = 0
+      parsers.each do |p|
+        res = p._parse ctx
         return INVALID if INVALID[res]
-        ret << res unless SKIP[res]
-        skipper = @inner_skip
+        if INVALID[ret]
+          ret = res if counter == idx and ! SKIP[res]
+        end
+        counter += 1 unless SKIP[res]
       end
       ret
     end
+  end
 
-    def [] idx
-      raise 'index out of range' if idx >= size() or idx < 0
-      s1 = SeqOneInnerSkip[*self]
-      s1.idx = idx
-      s1.inner_skip = @inner_skip if @inner_skip
-      s1
+  # skips skipper between tokens
+  class Seq_ < Struct.new(:first, :rest, :skipper)
+    include ::Rsec
+
+    def _parse ctx
+      res = first._parse ctx
+      return INVALID if INVALID[res]
+      ret = [res]
+
+      rest.each do |e|
+        return INVALID if INVALID[skipper._parse ctx]
+        res = e._parse ctx
+        return INVALID if INVALID[res]
+        ret << res unless SKIP[res]
+      end
+      ret
     end
   end
   
-  # sequence combinator<br/>
-  # the result is the result of the parser at idx
-  class SeqOne < Array
+  # NOTE the skipped element will not be counted
+  class SeqOne_ < Struct.new(:first, :rest, :skipper, :idx)
     include ::Rsec
-    attr_accessor :idx
 
     def _parse ctx
-      ret = INVALID
+      res = first._parse ctx
+      return INVALID if INVALID[res]
       counter = 0
-      each do |p|
+      ret = counter == idx ? res : INVALID
+
+      rest.each do |p|
+        return INVALID if INVALID[skipper._parse ctx]
         res = p._parse ctx
         return INVALID if INVALID[res]
-        if INVALID[ret]
-          ret = res if counter == @idx and ! SKIP[res]
+        if INVALID[ret] # if we got one ret, don't do it anymore
+          ret = res if counter == idx and ! SKIP[res]
         end
         counter += 1 unless SKIP[res]
       end
@@ -78,44 +83,20 @@ module Rsec
     end
   end
 
-  class SeqOneInnerSkip < Array
-    include ::Rsec
-    attr_accessor :inner_skip, :idx
-
-    def _parse ctx
-      ret = INVALID
-      counter = 0
-      skipper = nil
-      each do |p|
-        # no skip first token
-        if skipper
-          return INVALID if INVALID[skipper._parse ctx]
-        end
-        res = p._parse ctx
-        return INVALID if INVALID[res]
-        if INVALID[ret]
-          ret = res if counter == @idx and ! SKIP[res]
-        end
-        counter += 1 unless SKIP[res]
-        skipper = @inner_skip
-      end
-      ret
-    end
-  end
-
-  # or combinator<br/>
-  # result in one of the members, or nil
-  class Or < Array
+  # branch combinator<br/>
+  # result in one of the members, or INVALID
+  class Branch < Struct.new(:parsers)
     include ::Rsec
 
     def _parse ctx
       save_point = ctx.pos
-      each do |e|
+      parsers.each do |e|
         res = e._parse ctx
         return res unless INVALID[res]
         ctx.pos = save_point
       end
       INVALID # don't forget to fail it when none of the elements matches
     end
-  end # class
+  end
+
 end

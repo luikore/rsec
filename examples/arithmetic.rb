@@ -13,7 +13,7 @@ def arithmetic
 
   num    = prim :double
   paren  = lazy{expr}.wrap_ '()'
-  factor = num | paren
+  factor = branch(num, paren)
   term   = factor.join(one_of_('*/%')).map &calculate
   expr   = term.join(one_of_('+-')).map &calculate
   expr.eof

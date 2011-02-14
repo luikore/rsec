@@ -2,7 +2,7 @@
 # ------------------------------------------------------------------------------
 # Unary Combinators
 
-module Rsec
+module Rsec #:nodoc
   Unary = Struct.new :some
   # unary combinator base
   class Unary
@@ -13,21 +13,6 @@ module Rsec
   class Pattern < Unary
     def _parse ctx
       ctx.scan some() or INVALID
-    end
-
-    def until
-      UntilPattern[some()]
-    end
-
-    def skip
-      SkipPattern[some()]
-    end
-  end
-
-  # returns a value for any input
-  class Value < Unary
-    def _parse ctx
-      some()
     end
   end
 
@@ -93,10 +78,6 @@ module Rsec
     def _parse ctx
       ctx.scan_until some() or INVALID
     end
-
-    def skip
-      SkipUntilPattern[some()]
-    end
   end
 
   # skip until the pattern<br/>
@@ -122,12 +103,10 @@ module Rsec
 
   class SpacedOneOf < Unary
     def _parse ctx
-      save_point = ctx.pos
       ctx.skip /\s*/
       return INVALID if ctx.eos?
       chr = ctx.getch
       unless some().index(chr)
-        ctx.pos = save_point
         return INVALID
       end
       ctx.skip /\s*/
@@ -135,24 +114,9 @@ module Rsec
     end
   end
 
-  # dynamic parser
-  # NOTE it could be rather slow
-  class Dynamic < Unary
-    def _parse ctx
-      parser = \
-        begin
-          some()[]
-        rescue NameError => ex
-          some().binding.eval ex.name.to_s
-        end
-      parser._parse ctx
-    end
-  end
-
   # sometimes a variable is not defined yet<br/>
   # lazy is used to capture it later
   # NOTE the value is captured the first time it is called
-  #      if want to capture it everytime, use dynamic
   class Lazy < Unary
     def _parse ctx
       @some ||= \

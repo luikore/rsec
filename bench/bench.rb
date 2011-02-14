@@ -9,7 +9,6 @@ s = '(3+24/5)/10-3*4+((82321+12-3)-3*4+(82321+12-3))/5'
 $:.unshift "#{File.dirname(__FILE__)}/../lib"
 $:.unshift "#{File.dirname(__FILE__)}/../ext"
 require "#{File.dirname(__FILE__)}/../examples/arithmetic"
-require "#{File.dirname(__FILE__)}/../examples/arithmetic_rpn"
 
 # treetop
 require "treetop"
@@ -33,10 +32,6 @@ puts ''
 
 print 'rsec result:', "\t"
 p = arithmetic()
-measure{ p.parse! s }
-
-print 'rsec rpn:', "\t"
-p = arithmetic_rpn()
 measure{ p.parse! s }
 
 print 'treetop result:', "\t"

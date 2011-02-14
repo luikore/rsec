@@ -1,16 +1,53 @@
-desc 'test all'
-task :tests do
+# config whether use c-ext
+module Rsec; end
+def use_ext yes_or_no
+  Rsec.module_eval %Q[
+    USE_CEXT = :#{yes_or_no}
+  ]
+end
+
+def test
   Dir.glob "./test/test_*.rb" do |f|
     require f
   end
 end
 
-# alias
 desc 'test all'
-task :test => :tests
+task :test do
+  test
+end
 
-desc 'compare performance with treetop'
-task :bench do
+desc 'test pure ruby implementation'
+task 'test:pure' do
+  use_ext :no
+  test
+end
+
+desc 'test implementation with c ext'
+task 'test:ext' do
+  use_ext :yes
+  test
+end
+
+desc 'compare performance with treetop and haskell'
+task 'bench' do
   require './bench/bench.rb'
 end
 
+desc 'compare performance, pure'
+task 'bench:pure' do
+  use_ext :no
+  require './bench/bench.rb'
+end
+
+desc 'compare performance with c ext code'
+task 'bench:ext' do
+  use_ext :yes
+  require './bench/bench.rb'
+end
+
+desc 'build gems'
+task 'gem' do
+  system 'gem build rsec.gemspec'
+  system 'gem build rsec_ext.gemspec'
+end
