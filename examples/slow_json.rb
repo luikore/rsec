@@ -29,27 +29,27 @@ class SlowJSON
     unicode_bytes = /[0-9a-f]{4}/i.r{|bytes|
       [bytes].pack('H*').force_encoding('utf-16be').encode!('utf-8')
     }
-    escape_char = branch('"', "\\", '/',
-                  'b'.r{"\b"},
-                  'f'.r{"\f"},
-                  'n'.r{"\n"},
-                  'r'.r{"\r"},
-                  't'.r{"\t"},
-                  seq('u'.r, unicode_bytes)[1])
-    branch(/[^"\\]+/, seq('\\', escape_char)[1])
+    escape_char = '"' | "\\" | '/' |
+                  'b'.r{"\b"} |
+                  'f'.r{"\f"} |
+                  'n'.r{"\n"} |
+                  'r'.r{"\r"} |
+                  't'.r{"\t"} |
+                  seq('u'.r, unicode_bytes)[1]
+    /[^"\\]+/ | seq('\\', escape_char)[1]
   end
 
   def generate_parser
     string  = (chars_parser ** 0).map(&:join).wrap('""')
     # -? int frac? exp?
     number  = prim(:double, allowed_sign: '-')
-    @value  = branch(string, number, lazy{@object}, lazy{@array},
-              'true'.r{true},
-              'false'.r{false},
+    @value  = string | number | lazy{@object} | lazy{@array} |
+              'true'.r{true} |
+              'false'.r{false} |
               'null'.r{nil})
     pair    = seq(string, /\s*:\s*/.r.skip, @value)
-    @array  = branch(/\[\s*\]/.r{[]}, elem_parser(@value).wrap_('[]'))
-    @object = branch(/\{\s*\}/.r{{}}, elem_parser(pair).wrap_('{}').map{|arr|Hash[arr]})
+    @array  = /\[\s*\]/.r{[]} | elem_parser(@value).wrap_('[]')
+    @object = /\{\s*\}/.r{{}} | elem_parser(pair).wrap_('{}').map{|arr|Hash[arr]}
   end
 
 end

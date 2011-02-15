@@ -43,8 +43,8 @@ class Scheme
     boolean = /\#[tf]/.    r {|n| Value[n=='#t'] }
     integer = /0|[1-9]\d*/.r {|n| Value[n.to_i]  }
     id      = /[^\s\(\)\[\]]+/.r
-    atom    = branch(boolean, integer, id)
-    cell    = branch(atom, lazy{list})
+    atom    = boolean | integer | id
+    cell    = atom | lazy{list}
     cells   = spacee.join cell
     list    = cells.wrap('()')
     @parser = cells.eof

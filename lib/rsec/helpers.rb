@@ -115,12 +115,6 @@ module Rsec #:nodoc:
       Seq_[first, rest, skipper].map p
     end
 
-    # branch parser, parsers at left have higher priority to right
-    def branch *xs, &p
-      xs.map! {|x| Rsec.make_parser x }
-      Branch[xs].map p
-    end
-
   end # helpers
 
   # robust
@@ -160,6 +154,18 @@ module Rsec #:nodoc:
   def join inter, &p
     inter = Rsec.make_parser inter
     Join[self, inter].map p
+  end
+
+  # branch
+  def | y, &p
+    y = Rsec.make_parser y
+    arr =
+      if (is_a?(Branch) and !p)
+        [*parsers, y]
+      else
+        [self, y]
+      end
+    Branch[arr].map p
   end
 
   # repeat n or in a range<br/>

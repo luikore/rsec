@@ -10,7 +10,7 @@ def bnf
   spacee    = /\s*/.r # include \n
   literal   = /".*?"|'.*?'/
   rule_name = /\<.*?\>/
-  term      = branch literal, rule_name
+  term      = literal | rule_name
   list      = term.join nbsp.skip
   expr      = list.join seq(nbsp, '|', nbsp)[1]
   rule      = seq_ rule_name, '::=', expr
