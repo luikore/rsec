@@ -10,7 +10,7 @@ module Rsec #:nodoc:
 
     # lazy parser
     def lazy &p
-      raise 'lazy() requires a block' unless p
+      raise ArgumentError.new 'lazy() requires a block' unless p
       Lazy[p]
     end
 
@@ -19,25 +19,32 @@ module Rsec #:nodoc:
       Bol[default_return].map p
     end
     
-    # move scan pos n characters<br/>
-    # n can be negative
-    def skip_n n, &p
-      SkipN[n].map p
-    end
-
+    # parses one of chars in str
     def one_of str, &p
-      raise 'should be string' unless str.is_a?(String)
-      raise 'str len should > 0' if str.empty?
-      raise 'str should be ascii' unless str.bytesize == str.size
-      OneOf[str.dup.freeze].map p
+      Rsec.assert_type str, String
+      raise ArgumentError.new 'str len should > 0' if str.empty?
+      one_of_klass =
+        if (str.bytesize == str.size) and Rsec.const_defined?(:OneOfByte)
+          OneOfByte
+        else
+          OneOf
+        end
+      one_of_klass[str.dup.freeze].map p
     end
 
+    # parses one of chars in str, with leading optional space
     def one_of_ str, &p
-      raise 'should be string' unless str.is_a?(String)
+      Rsec.assert_type str, String
       raise 'str len should > 0' if str.empty?
       raise 'str should be ascii' unless str.bytesize == str.size
       raise 'str should not contain space' if str =~ /\s/
-      SpacedOneOf[str.dup.freeze].map p
+      spaced_one_of_klass =
+        if (str.bytesize == str.size) and Rsec.const_defined?(:SpacedOneOfByte)
+          SpacedOneOfByte
+        else
+          SpacedOneOf
+        end
+      spaced_one_of_klass[str.dup.freeze].map p
     end
 
     # primitive parser, returns nil if overflow or underflow. <br/>
@@ -46,8 +53,6 @@ module Rsec #:nodoc:
     # <pre>
     #   :double
     #   :hex_double
-    #   :float
-    #   :hex_float
     #   :int32
     #   :int64
     #   :unsigned_int32
@@ -61,12 +66,14 @@ module Rsec #:nodoc:
     # </pre>
     def prim type, options={}, &p
       base = options[:base]
-      if [:double, :hex_double, :float, :hex_float].index base
+      if [:double, :hex_double].index base
         raise 'Floating points does not allow :base'
       end
       base ||= 10
-      raise ':base should be integer' unless base.is_a?(Fixnum)
-      raise "Base out of range #{base}" if base < 2 or base > 16
+      Rsec.assert_type base, Fixnum
+      unless (2..36).include? base
+        raise RangeError.new ":base should be in 2..36, but got #{base}"
+      end
       
       sign_strategy = \
         case (options[:allowed_sign] or options[:allowed_signs])
@@ -80,16 +87,17 @@ module Rsec #:nodoc:
       parser = \
         case type
         when :double; PDouble.new sign_strategy, false # decimal
-        when :float;  PFloat.new sign_strategy, false
         when :hex_double; PDouble.new sign_strategy, true # hex
-        when :hex_float;  PFloat.new sign_strategy, true
         when :int32;  PInt32.new sign_strategy, base
+        when :int64;  PInt64.new sign_strategy, base
         when :unsigned_int32;
           raise 'unsigned int not allow - sign' if options[:allowed_signs] =~ /-/
           PUnsignedInt32.new sign_strategy, base
-        # when :int64;  PInt64.new sign_strategy, base
-        # when :unsigned_int64; PUnsignedInt64.new sign_strategy, base
-        else; raise "Invalid primitive type #{type}"
+        when :unsigned_int64;
+          raise 'unsigned int not allow - sign' if options[:allowed_signs] =~ /-/
+          PUnsignedInt64.new sign_strategy, base
+        else
+          raise "Invalid primitive type #{type}"
         end
       parser.map p
     end
@@ -124,26 +132,36 @@ module Rsec #:nodoc:
   # Binary
 
   # wrap(parser, '()') is equivalent to '('.r >> parser << ')' <br/>
-  # str should be 2 ascii chars (begin-char and end-char)
   def wrap str, &p
-    raise 'should be string' unless str.is_a?(String)
-    raise 'str should be 2 ascii chars (begin-char and end-char)' unless (str.bytesize == 2 and str.size == 2)
-    Wrap[self, str.dup.freeze].map p
+    Rsec.assert_type str, String
+    raise 'wrapping string length should be 2' if str.size != 2
+    wrap_klass =
+      if (str.bytesize == str.size) and Rsec.const_defined?(:WrapByte)
+        WrapByte
+      else
+        Wrap
+      end
+    wrap_klass[self, str.dup.freeze].map p
   end
 
   # wrap_(parser, '()') is equivalent to /\(\s*/.r >> parser << /\s*\)/
-  # str should be 2 ascii chars (begin-char and end-char)
   def wrap_ str, &p
-    raise 'should be string' unless str.is_a?(String)
-    raise 'str should be 2 ascii chars (begin-char and end-char)' unless (str.bytesize == 2 and str.size == 2)
-    SpacedWrap[self, str.dup.freeze].map p
+    Rsec.assert_type str, String
+    raise 'wrapping string length should be 2' if str.size != 2
+    wrap_klass =
+      if (str.bytesize == str.size) and Rsec.const_defined?(:SpacedWrapByte)
+        SpacedWrapByte
+      else
+        SpacedWrap
+      end
+    wrap_klass[self, str.dup.freeze].map p
   end
 
   # transform result
   def map lambda_p=nil, &p
     return self if (lambda_p.nil? and p.nil?)
     p = lambda_p || p
-    raise 'should give a proc or lambda' unless (p.is_a? Proc)
+    raise TypeError.new 'should give a proc or lambda' unless (p.is_a? Proc)
     Map[self, p]
   end
 
@@ -290,8 +308,13 @@ module Rsec #:nodoc:
   def Rsec.make_parser x
     return x if x.is_a?(::Rsec)
     x = x.send(TO_PARSER_METHOD) if x.respond_to?(TO_PARSER_METHOD)
-    raise "type mismatch, <#{x}> should be an Rsec" unless x.is_a?(::Rsec)
+    Rsec.assert_type x, Rsec
     x
+  end
+
+  # type assertion
+  def Rsec.assert_type obj, type
+    (raise TypeError.new "#{obj} should be a #{type}") unless (obj.is_a? type)
   end
 end
 

@@ -38,6 +38,30 @@ module Rsec #:nodoc:
       p ? parser.map(&p) : parser
     end
   end
+
+  # optimize one_of() for byte-only string
+  class OneOfByte < OneOf
+  end
+
+  # optimize one_of_() for byte-only string
+  class SpacedOneOfByte < SpacedOneOf
+  end
+
+  # optimize wrap() for byte-only string
+  class WrapByte < Wrap
+  end
+
+  # optimize wrap_() for byte-only string
+  class SpacedWrapByte < SpacedWrap
+  end
+
+  # overwrite prim initializer
+  [PDouble, PInt32, PUnsignedInt32].each do |k|
+    k.send :define_method, :initialize, ->l, r{
+      self.left = l
+      self.right = r
+    }
+  end
 end
 
 # require the so

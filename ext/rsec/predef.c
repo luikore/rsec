@@ -93,7 +93,7 @@ static int is_hex(char* pointer) {
 #define float_stub strtod
 
 DEFINE_PARSER(parse_double, double, strtod, int_stub, DBL2NUM, 1);
-DEFINE_PARSER(parse_float,  float,  strtof, int_stub, DBL2NUM, 1);
+// DEFINE_PARSER(parse_float,  float,  strtof, int_stub, DBL2NUM, 1);
 DEFINE_PARSER(parse_int32, long,                        float_stub, strtol,   INT2NUM,  0);
 DEFINE_PARSER(parse_unsigned_int32, unsigned long,      float_stub, strtoul,  UINT2NUM, 0);
 // VC has no strtoll / strtoull
@@ -313,7 +313,7 @@ static VALUE parse_spaced_wrap(VALUE self, VALUE ctx) {
 // one of byte parser
 
 
-static VALUE parse_one_of(VALUE self, VALUE ctx) {
+static VALUE parse_one_of_byte(VALUE self, VALUE ctx) {
 	VALUE bytes = RSTRUCT_PTR(self)[0];
 	char* ptr = RSTRING_PTR(bytes);
 	int len = RSTRING_LEN(bytes);
@@ -335,7 +335,7 @@ static VALUE parse_one_of(VALUE self, VALUE ctx) {
 	return invalid;
 }
 
-static VALUE parse_spaced_one_of(VALUE self, VALUE ctx) {
+static VALUE parse_spaced_one_of_byte(VALUE self, VALUE ctx) {
 	VALUE bytes = RSTRUCT_PTR(self)[0];
 	char* bytes_ptr = RSTRING_PTR(bytes);
 	int len = RSTRING_LEN(bytes);
@@ -445,7 +445,7 @@ Init_predef() {
 	rb_define_method(rb_const_get(rsec, rb_intern(klass_name)), "_parse", method, 1)
 
 	REDEFINE("PDouble", parse_double);
-	REDEFINE("PFloat", parse_float);
+	// REDEFINE("PFloat", parse_float);
 	REDEFINE("PInt32", parse_int32);
 	// REDEFINE("PInt64", parse_int64);
 	REDEFINE("PUnsignedInt32", parse_unsigned_int32);
@@ -459,8 +459,8 @@ Init_predef() {
 	REDEFINE("SkipByte", parse_skip_byte);
 	REDEFINE("Wrap", parse_wrap);
 	REDEFINE("SpacedWrap", parse_spaced_wrap);
-	REDEFINE("OneOf", parse_one_of);
-	REDEFINE("SpacedOneOf", parse_spaced_one_of);
+	REDEFINE("OneOfByte", parse_one_of_byte);
+	REDEFINE("SpacedOneOfByte", parse_spaced_one_of_byte);
 	REDEFINE("Join", parse_join);
 	REDEFINE("Map", parse_map);
 

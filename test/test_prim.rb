@@ -2,7 +2,7 @@ require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class TPrim < TC
   def test_floating
-    [:double, :float].each do |ty|
+    [:double].each do |ty|
       p = prim ty
       ase INVALID, p.parse('d')
       ase 3.2e5.round, p.parse('+3.2e5').round
@@ -25,7 +25,7 @@ class TPrim < TC
   end
 
   def test_hex_floating
-    [:hex_double, :hex_float].each do |ty|
+    [:hex_double].each do |ty|
       p = prim ty
       ase Float('0x3.2').round(4), p.parse('0x3.2').round(4)
 
@@ -36,11 +36,13 @@ class TPrim < TC
   end
 
   def test_integer
-    [:int32, :unsigned_int32].each do |ty|
+    [:int32, :unsigned_int32, :int64, :unsigned_int64].each do |ty|
       p = prim ty
       ase 432, p.parse('432')
       p = prim ty, base: 4
       ase '120'.to_i(4), p.parse('120')
+      p = prim ty, base: 35
+      ase '1ax'.to_i(35), p.parse('1ax')
     end
 
     p = prim :int32, allowed_signs: '-'

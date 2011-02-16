@@ -18,3 +18,8 @@ def arithmetic
   expr   = term.join(one_of_('+-')).map &calculate
   expr.eof
 end
+
+if __FILE__ == $PROGRAM_NAME
+  p one_of_('+-').class
+end
+

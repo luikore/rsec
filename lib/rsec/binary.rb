@@ -30,22 +30,6 @@ module Rsec #:nodoc:
     end
   end
 
-  class FallLeft < Binary
-    def _parse ctx
-      ret = left()._parse ctx
-      return INVALID if INVALID[ret]
-      return INVALID if INVALID[right()._parse ctx]
-      ret
-    end
-  end
-
-  class FallRight < Binary
-    def _parse ctx
-      return INVALID if INVALID[left()._parse ctx]
-      right()._parse ctx
-    end
-  end
-
   # look ahead
   class LookAhead < Binary
     def _parse ctx
@@ -210,33 +194,37 @@ module Rsec #:nodoc:
     end
   end
 
-  # TODO the following parsers should be ajusted to more precised level
-  # NOTE these classes are designed for C-ext, so the ruby code look a little wierd
-
-  def Rsec.sign_strategy_to_pattern sign_strategy
-    case sign_strategy
-    when 3; '[\+\-]?'
-    when 2; '\+?'
-    when 1; '\-?'
-    when 0; ''
+  # primitive base
+  module Prim
+    def sign_strategy_to_pattern sign_strategy
+      case sign_strategy
+      when 3; '[\+\-]?'
+      when 2; '\+?'
+      when 1; '\-?'
+      when 0; ''
+      end
     end
   end
 
   # double precision float parser
   class PDouble < Binary
+    include Prim
+
+    def float_pattern sign_strategy, is_hex
+      sign = sign_strategy_to_pattern sign_strategy
+      if is_hex
+        /#{sign}0x[\da-f]+(\.[\da-f]+)?/i
+      else
+        /#{sign}\d+(\.\d+)?(e[\+\-]?\d+)?/i
+      end
+    end
+
     def initialize sign_strategy, is_hex
-      super(sign_strategy, is_hex)
-      sign = Rsec.sign_strategy_to_pattern sign_strategy
-      @pattern =
-        if is_hex
-          /#{sign}0x[\da-f]+(\.[\da-f]+)?/i
-        else
-          /#{sign}\d+(\.\d+)?(e[\+\-]?\d+)?/i
-        end
+      self.left = float_pattern sign_strategy, is_hex
     end
 
     def _parse ctx
-      if (d = ctx.scan @pattern)
+      if (d = ctx.scan left)
         d = Float(d)
         return d if d.finite?
       end
@@ -244,79 +232,65 @@ module Rsec #:nodoc:
     end
   end
 
-  # single precision float parser
-  class PFloat < Binary
-    def initialize sign_strategy, is_hex
-      super(sign_strategy, is_hex)
-      sign = Rsec.sign_strategy_to_pattern sign_strategy
-      @pattern =
-        if is_hex
-          /#{sign}0x[\da-f]+(\.[\da-f]+)?/i
-        else
-          /#{sign}\d+(\.\d+)?(e[\+\-]?\d+)?/i
-        end
+  # primitive int parser commons
+  class PInt < Binary
+    include Prim
+
+    def int_pattern sign_strategy, base
+      sign = sign_strategy_to_pattern sign_strategy
+      if base > 10
+        d_hi = 9
+        char_range = "a-#{('a'.ord + base - 11).chr}"
+      else
+        d_hi = base - 1
+        char_range = ''
+      end
+      /#{sign}[0-#{d_hi}#{char_range}]+/i
     end
 
     def _parse ctx
-      if (d = ctx.scan @pattern)
-        d = Float(d)
-        return d if d.finite? # TODO single pecision float check
+      if (d = ctx.scan left)
+        d = d.to_i @base
+        return d if right.include?(d)
       end
       INVALID
     end
   end
 
   # 32-bit int parser
-  class PInt32 < Binary
+  class PInt32 < PInt
     def initialize sign_strategy, base
-      super(sign_strategy, base)
-      sign = Rsec.sign_strategy_to_pattern sign_strategy
-      if base > 10
-        d_hi = 9
-        char_range = "a-#{('a'.ord + base - 11).chr}"
-      else
-        d_hi = base - 1
-        char_range = ''
-      end
-      @pattern = /#{sign}[0-#{d_hi}#{char_range}]+/i
-    end
-
-    def _parse ctx
-      if (d = ctx.scan @pattern)
-        d = d.to_i right
-        return d if (-2147483648..2147483647).include?(d)
-      end
-      INVALID
+      @base = base
+      self.left = int_pattern sign_strategy, base
+      self.right = (-(1<<31))..((1<<31)-1)
     end
   end
 
   # unsigned 32 bit int parser
-  class PUnsignedInt32 < Binary
+  class PUnsignedInt32 < PInt
     def initialize sign_strategy, base
-      super(sign_strategy, base)
-      sign = Rsec.sign_strategy_to_pattern sign_strategy
-      if base > 10
-        d_hi = 9
-        char_range = "a-#{('a'.ord + base - 11).chr}"
-      else
-        d_hi = base - 1
-        char_range = ''
-      end
-      @pattern = /#{sign}[0-#{d_hi}#{char_range}]+/i
-    end
-
-    def _parse ctx
-      if (d = ctx.scan @pattern)
-        d = d.to_i right
-        return d if d < 4294967296
-      end
-      INVALID
+      @base = base
+      self.left = int_pattern sign_strategy, base
+      self.right = 0...(1<<32)
     end
   end
 
-  # NOTE
-  # VC has no strtoll and strtoull
-  # class PInt64 < Binary; end
-  # class PUnsignedInt64 < Binary; end
+  # 64-bit int parser
+  class PInt64 < PInt
+    def initialize sign_strategy, base
+      @base = base
+      self.left = int_pattern sign_strategy, base
+      self.right = (-(1<<63))..((1<<63)-1)
+    end
+  end
+
+  # unsigned 64-bit int parser
+  class PUnsignedInt64 < PInt
+    def initialize sign_strategy, base
+      @base = base
+      self.left = int_pattern sign_strategy, base
+      self.right = 0...(1<<64)
+    end
+  end
 
 end

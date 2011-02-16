@@ -15,13 +15,6 @@ module Rsec #:nodoc
       ctx.scan some() or INVALID
     end
   end
-
-  # matches beginning of line
-  class Bol < Unary
-    def _parse ctx
-      ctx.bol ? some() : INVALID
-    end
-  end
   
   # should be end-of-file after parsing
   class Eof < Unary
@@ -61,19 +54,8 @@ module Rsec #:nodoc
     end
   end
 
-  # skip n<br/>
-  # fails when out of range.
-  class SkipN < Unary
-    def _parse ctx
-      ctx.pos = ctx.pos + some()
-      SKIP
-    rescue RangeError # index may out of range
-      INVALID
-    end
-  end
-
   # scan until the pattern<br/>
-  # only constructable for Patterns
+  # for optimizing
   class UntilPattern < Unary
     def _parse ctx
       ctx.scan_until some() or INVALID
@@ -81,7 +63,7 @@ module Rsec #:nodoc
   end
 
   # skip until the pattern<br/>
-  # only constructable for Patterns
+  # for optimizing
   class SkipUntilPattern < Unary
     def _parse ctx
       ctx.skip_until(some()) ? SKIP : INVALID

@@ -1,6 +1,27 @@
 require "#{File.dirname(__FILE__)}/helpers.rb"
 
 class TMisc < TC
+  def test_lazy
+    p1 = nil
+    p2 = lazy{p1}
+    
+    p1 = '3'.r
+    asp '3', p2
+    
+    p1 = '4'.r
+    asp '3', p2
+
+    p2 = lazy{p7} # don't have to define p7 before lazy
+    p7 = '5'.r
+    asp '5',p2
+  end
+  
+  def test_eof
+    p = ''.r.eof
+    asp '', p
+    ase INVALID, p.parse('a')
+  end
+
   def test_cache
     p1 = seq('a', seq('b', 'c'))
     p = seq(p1.cached, 'd')
