@@ -1,5 +1,5 @@
 Gem::Specification.new do |s|
-  s.name = "rsec_ext"
+  s.name = "rsec-ext"
   s.version = "0.1"
   s.author = "NS"
   s.homepage = "http://wiki.github.com/luikore/rsec"
