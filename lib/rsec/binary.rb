@@ -18,14 +18,12 @@ module Rsec #:nodoc:
     end
   end
 
-  # set the parsing error in ctx<br/>
-  # if left failed, the error would show up<br/>
-  # if not, the error disappears
+  # set expect tokens for parsing error in ctx<br/>
+  # if left failed, the error would be registered
   class Fail < Binary
     def _parse ctx
-      ctx.err = right()
       res = left()._parse ctx
-      ctx.err = nil unless INVALID[res]
+      ctx.on_fail right if INVALID[res]
       res
     end
   end

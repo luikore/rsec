@@ -222,9 +222,10 @@ module Rsec #:nodoc:
     NegativeLookAhead[self, other].map p
   end
 
-  # when parsing failed, show msg instead of default message
-  def fail msg, &p
-    Fail[self, msg].map p
+  # when parsing failed, show "expect tokens" error
+  def fail *tokens, &p
+    return self if tokens.empty?
+    Fail[self, tokens].map p
   end
 
   # ----------------------------------------------------------------------------
@@ -321,16 +322,16 @@ end
 class String
   # String#r: convert self to parser
   # convienient string-to-parser transformer
-  define_method ::Rsec::TO_PARSER_METHOD, ->(&p){
-    ::Rsec::Pattern[/#{Regexp.escape self}/].map p
+  define_method ::Rsec::TO_PARSER_METHOD, ->(*expects, &p){
+    ::Rsec::Pattern[/#{Regexp.escape self}/].fail(*expects).map p
   }
 end
 
 class Regexp
   # Regexp#r: convert self to parser
   # convienient regexp-to-parser transformer
-  define_method ::Rsec::TO_PARSER_METHOD, ->(&p){
-    ::Rsec::Pattern[self].map p
+  define_method ::Rsec::TO_PARSER_METHOD, ->(*expects, &p){
+    ::Rsec::Pattern[self].fail(*expects).map p
   }
 end
 

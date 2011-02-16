@@ -374,7 +374,7 @@ static VALUE parse_spaced_one_of_byte(VALUE self, VALUE ctx) {
 // faster join parser
 
 
-VALUE parse_join(VALUE self, VALUE ctx) {
+static VALUE parse_join(VALUE self, VALUE ctx) {
 	VALUE token = rb_iv_get(self, "@token");
 	VALUE inter = rb_iv_get(self, "@inter");
 	struct strscanner* ss;
@@ -412,11 +412,20 @@ VALUE parse_join(VALUE self, VALUE ctx) {
 // faster map parser
 
 
-VALUE parse_map(VALUE self, VALUE ctx) {
+static VALUE parse_map(VALUE self, VALUE ctx) {
 	VALUE* data = RSTRUCT_PTR(self);
 	VALUE res = call_parse(data[0], ctx);
 	if (res == invalid) return res;
 	return rb_proc_call(data[1], rb_ary_new3(1, res));
+}
+
+
+// -----------------------------------------------------------------------------
+// faster ParseContext.on_fail
+
+
+static VALUE parse_context_on_fail(VALUE self, VALUE tokens) {
+	return 0; // TODO complete c side parse context
 }
 
 

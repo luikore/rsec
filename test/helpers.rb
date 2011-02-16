@@ -15,7 +15,7 @@ end
 module Test::Unit::Assertions
   alias ase assert_equal
   def asr
-    assert_raise(Rsec::ParseError) { yield }
+    assert_raise(Rsec::SyntaxError) { yield }
   end
   # assert parse returns s
   def asp s, p

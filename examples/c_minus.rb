@@ -4,14 +4,23 @@ class CMinus
   include Rsec::Helpers
   
   # "terminal" rules
-  ID     = /[a-zA-Z]\w*/.r
-  NUM    = /\d+/.r
-  INT    = /[+-]?\d+/.r
-  NBSP   = /[\ \t]*/.r.skip
-  SPACE  = /\s*/.r.skip
-  TYPE   = /int|void/.r
-  EOSTMT = /;/.r.skip # end of statement
-  
+  ID        = /[a-zA-Z]\w*/.r :id
+  NUM       = /\d+/.r :num
+  INT       = /[+-]?\d+/.r :int
+  NBSP      = /[\ \t]*/.r.skip
+  SPACE     = /\s*/.r.skip
+  TYPE      = /int|void/.r :type
+  EOSTMT    = /;/.r(';').skip # end of statement
+  ELSE      = /else\s/.r :keyword_else
+  IF        = 'if'.r :keyword_if
+  WHILE     = 'while'.r :keyword_while
+  RETURN    = /return\s/.r :keyword_return
+  MUL_OP    = /\s*[\*\/%]\s*/.r '*/%', &:strip
+  ADD_OP    = /\s*[\+\-]\s*/.r '+-', &:strip
+  COMP_OP   = /\s*(\<=|\<|\>|\>=|==|!=)\s*/.r 'compare operator', &:strip
+  COMMA     = /\s*,\s*/.r(:comma).skip
+  EMPTY_BRA = /\[\s*\]/.r('empty square bracket')
+
   # ------------------- helpers
   
   # call(function apply) expression
@@ -20,16 +29,13 @@ class CMinus
     seq_(ID, SPACE, args._?.wrap_('()'))
   end
 
-  # binary arithmetic
-  def binary_arithmetic factor
-    factor.join(/\s*[\*\/%]\s*/.r &:strip).flatten
-          .join(/\s*[\+\-]\s*/.r &:strip).flatten
-          .join(/\s*(\<=|\<|\>|\>=|==|!=)\s*/.r &:strip).flatten
-  end
-  
   # (binary) expression
   def expression
-    expr = lazy{assign} | binary_arithmetic(lazy{factor})
+    binary_arithmetic = lazy{factor}
+      .join(MUL_OP).flatten
+      .join(ADD_OP).flatten
+      .join(COMP_OP).flatten
+    expr = lazy{assign} | binary_arithmetic
     # abc
     # abc[12]
     var = seq_(ID, expr.wrap_('[]')._?).flatten
@@ -47,10 +53,10 @@ class CMinus
     _stmt = lazy{stmt} # to reduce the use of lazy{}
     
     expr_stmt = seq_(expr, EOSTMT).flatten | EOSTMT
-    else_stmt = seq_(/else\s/, _stmt)
-    if_stmt = seq_('if', brace, _stmt, else_stmt._?)
-    while_stmt = seq_('while', brace, _stmt)
-    return_stmt = seq_(/return\s/, expr._?, EOSTMT)
+    else_stmt = seq_(ELSE, _stmt)
+    if_stmt = seq_(IF, brace, _stmt, else_stmt._?)
+    while_stmt = seq_(WHILE, brace, _stmt)
+    return_stmt = seq_(RETURN, expr._?, EOSTMT)
     # { var_decls statements }
     block = seq_(SPACE.join(var_decl), SPACE.join(_stmt)).wrap_ '{}'
     stmt = block | if_stmt | while_stmt | return_stmt | expr_stmt
@@ -71,8 +77,8 @@ class CMinus
     # p stmt.parse! 'gcd(v,u-u/v*v);'
     # p stmt.parse! 'if(3==2) {return 4;}'
     
-    param = seq_(type_id, /\[\s*\]/.r._?)
-    params = param.join(/\s*,\s*/.r.skip) | 'void'
+    param = seq_(type_id, EMPTY_BRA._?)
+    params = param.join(COMMA) | 'void'
     brace = params.wrap_ '()'
     fun_decl = seq_(type_id, brace, block)
     # p fun_decl.parse! 'int gcd(int u, int v){return 2;}'
@@ -88,7 +94,7 @@ require "pp"
 pp c_minus.program.parse! %Q[
 int gcd(int u, int v)
 {
-  if (v == 0) return u ;
+  if (v == 0) return u x;
   else return gcd(v,u-u/v*v);
 }
 

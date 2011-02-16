@@ -51,3 +51,8 @@ task 'gem' do
   system 'gem build rsec.gemspec'
   system 'gem build rsec_ext.gemspec'
 end
+
+desc 'install gems'
+task 'gem:in' => 'gem' do
+  system 'gem in *.gem --no-rdoc --no-ri'
+end

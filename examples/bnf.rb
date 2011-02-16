@@ -8,7 +8,7 @@ include Rsec::Helpers
 def bnf
   nbsp      = /[\ \t]*/.r
   spacee    = /\s*/.r # include \n
-  literal   = /".*?"|'.*?'/
+  literal   = /".*?"|'.*?'/.r
   rule_name = /\<.*?\>/
   term      = literal | rule_name
   list      = term.join nbsp.skip

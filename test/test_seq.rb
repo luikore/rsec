@@ -27,7 +27,7 @@ class TSeq < TC
   def test_seq_one
     p = seq('a', 'b', 'c')[1]
     ase 'b', p.parse('abc')
-    p = seq('abc', /\s*/.r.skip, 'd')[1]
+    p = seq('abc', /\s*/.r.skip, 'd')[2]
     ase 'd', p.parse('abc d')
   end
 end

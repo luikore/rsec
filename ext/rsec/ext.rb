@@ -69,13 +69,14 @@ require "rsec/predef"
 
 class String
   # overwrite string-to-parser transformer
-  define_method ::Rsec::TO_PARSER_METHOD, ->(&p){
+  define_method ::Rsec::TO_PARSER_METHOD, ->(*expects, &p){
     parser = \
       if self.bytesize == 1
         ::Rsec::Byte[self]
       else
         ::Rsec::FixString[self]
       end
+    parser = parser.fail(*expects)
     p ? parser.map(&p) : parser
   }
 end
