@@ -1,7 +1,5 @@
 == Parser / Regexp Combinator for Ruby. 
 
-Generates simple and flat AST. (Or just no AST at all)
-
 Easier and faster than treetop / rex+racc.
 
 It's ruby1.9 only.
@@ -12,7 +10,15 @@ As Ruby's
 
 == Install 
 
-    gem install rsec
+The pure Ruby gem is fast enough (about 10+x faster than treetop generated code):
+
+    gem in rsec
+
+For extreme performance under C Ruby:
+
+	gem in rsec-ext
+
+It is about 30% faster than Haskell Parsec in the benchmark.
 
 == Document 
 
