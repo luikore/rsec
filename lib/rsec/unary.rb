@@ -6,7 +6,7 @@ module Rsec #:nodoc
   Unary = Struct.new :some
   # unary combinator base
   class Unary
-    include ::Rsec
+    include Parser
   end
 
   # matches a pattern
@@ -114,7 +114,7 @@ module Rsec #:nodoc
   # parse result is cached in ctx.
   # may improve performance
   class Cached
-    include ::Rsec
+    include Parser
     
     def self.[] parser
       self.new parser

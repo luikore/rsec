@@ -7,7 +7,7 @@ module Rsec #:nodoc:
   # sequence combinator<br/>
   # result in an array
   class Seq < Struct.new(:parsers)
-    include ::Rsec
+    include Parser
 
     def _parse ctx
       ret = []
@@ -24,7 +24,7 @@ module Rsec #:nodoc:
   # sequence combinator<br/>
   # the result is the result of the parser at idx
   class SeqOne < Struct.new(:parsers, :idx)
-    include ::Rsec
+    include Parser
 
     def _parse ctx
       ret = INVALID
@@ -39,12 +39,13 @@ module Rsec #:nodoc:
 
   # skips skipper between tokens
   class Seq_ < Struct.new(:first, :rest, :skipper)
-    include ::Rsec
+    include Parser
 
     def _parse ctx
       res = first._parse ctx
       return INVALID if INVALID[res]
-      ret = [res]
+      ret = []
+      ret << res unless SKIP[res]
 
       rest.each do |e|
         return INVALID if INVALID[skipper._parse ctx]
@@ -58,18 +59,19 @@ module Rsec #:nodoc:
   
   # skips skipper between tokens
   class SeqOne_ < Struct.new(:first, :rest, :skipper, :idx)
-    include ::Rsec
+    include Parser
 
     def _parse ctx
       res = first._parse ctx
       return INVALID if INVALID[res]
       ret = res if 0 == idx
 
+      check = idx - 1
       rest.each_with_index do |p, counter|
         return INVALID if INVALID[skipper._parse ctx]
         res = p._parse ctx
         return INVALID if INVALID[res]
-        ret = res if counter == idx
+        ret = res if counter == check
       end
       ret
     end
@@ -78,7 +80,7 @@ module Rsec #:nodoc:
   # branch combinator<br/>
   # result in one of the members, or INVALID
   class Branch < Struct.new(:parsers)
-    include ::Rsec
+    include Parser
 
     def _parse ctx
       save_point = ctx.pos

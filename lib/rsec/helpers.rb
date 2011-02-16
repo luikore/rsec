@@ -3,11 +3,10 @@
 # Helpers(combinators) to construct parser
 
 module Rsec #:nodoc:
+
+  # ------------------------------------------------------------------------------
   # these are not callable from a parser
   module Helpers
-    # --------------------------------------------------------------------------
-    # Unary
-
     # lazy parser
     def lazy &p
       raise ArgumentError.new 'lazy() requires a block' unless p
@@ -128,129 +127,128 @@ module Rsec #:nodoc:
   # robust
   Helper = Helpers
 
-  # ----------------------------------------------------------------------------
-  # Binary
+  # ------------------------------------------------------------------------------
+  # combinators attached to parsers
 
-  # wrap(parser, '()') is equivalent to '('.r >> parser << ')' <br/>
-  def wrap str, &p
-    Rsec.assert_type str, String
-    raise 'wrapping string length should be 2' if str.size != 2
-    wrap_klass =
-      if (str.bytesize == str.size) and Rsec.const_defined?(:WrapByte)
-        WrapByte
-      else
-        Wrap
-      end
-    wrap_klass[self, str.dup.freeze].map p
-  end
-
-  # wrap_(parser, '()') is equivalent to /\(\s*/.r >> parser << /\s*\)/
-  def wrap_ str, &p
-    Rsec.assert_type str, String
-    raise 'wrapping string length should be 2' if str.size != 2
-    wrap_klass =
-      if (str.bytesize == str.size) and Rsec.const_defined?(:SpacedWrapByte)
-        SpacedWrapByte
-      else
-        SpacedWrap
-      end
-    wrap_klass[self, str.dup.freeze].map p
-  end
-
-  # transform result
-  def map lambda_p=nil, &p
-    return self if (lambda_p.nil? and p.nil?)
-    p = lambda_p || p
-    raise TypeError.new 'should give a proc or lambda' unless (p.is_a? Proc)
-    Map[self, p]
-  end
-
-  # "p.join('+')" parses strings like "p+p+p+p+p".<br/>
-  # Note that at least 1 of p appears in the string.<br/>
-  # Sometimes it is useful to reverse the joining:<br/>
-  # /\s*/.r.skip.join('p') parses string like " p p  p "
-  def join inter, &p
-    inter = Rsec.make_parser inter
-    Join[self, inter].map p
-  end
-
-  # branch
-  def | y, &p
-    y = Rsec.make_parser y
-    arr =
-      if (is_a?(Branch) and !p)
-        [*parsers, y]
-      else
-        [self, y]
-      end
-    Branch[arr].map p
-  end
-
-  # repeat n or in a range<br/>
-  def * n, &p
-    parser =
-      if n.is_a?(Range)
-        raise "invalid n: #{n}" if n.begin < 0
-        if n.end > 0
-          RepeatRange[self, n]
+  module Parser #:nodoc:
+    # wrap(parser, '()') is equivalent to '('.r >> parser << ')' <br/>
+    def wrap str, &p
+      Rsec.assert_type str, String
+      raise 'wrapping string length should be 2' if str.size != 2
+      wrap_klass =
+        if (str.bytesize == str.size) and Rsec.const_defined?(:WrapByte)
+          WrapByte
         else
-          RepeatAtLeastN[self, n.begin]
+          Wrap
         end
-      else
-        raise "invalid n: #{n}" if n < 0
-        RepeatN[self, n]
-      end
-    parser.map p
-  end
+      wrap_klass[self, str.dup.freeze].map p
+    end
 
-  # repeat at least n<br/>
-  # [n, inf)
-  def ** n, &p
-    raise "invalid n: #{n}" if n < 0
-    RepeatAtLeastN[self, n].map p
-  end
+    # wrap_(parser, '()') is equivalent to /\(\s*/.r >> parser << /\s*\)/
+    def wrap_ str, &p
+      Rsec.assert_type str, String
+      raise 'wrapping string length should be 2' if str.size != 2
+      wrap_klass =
+        if (str.bytesize == str.size) and Rsec.const_defined?(:SpacedWrapByte)
+          SpacedWrapByte
+        else
+          SpacedWrap
+        end
+      wrap_klass[self, str.dup.freeze].map p
+    end
 
-  # look ahead
-  def & other, &p
-    other = Rsec.make_parser other
-    LookAhead[self, other].map p
-  end
+    # transform result
+    def map lambda_p=nil, &p
+      return self if (lambda_p.nil? and p.nil?)
+      p = lambda_p || p
+      raise TypeError.new 'should give a proc or lambda' unless (p.is_a? Proc)
+      Map[self, p]
+    end
 
-  # negative look ahead
-  def ^ other, &p
-    other = Rsec.make_parser other
-    NegativeLookAhead[self, other].map p
-  end
+    # "p.join('+')" parses strings like "p+p+p+p+p".<br/>
+    # Note that at least 1 of p appears in the string.<br/>
+    # Sometimes it is useful to reverse the joining:<br/>
+    # /\s*/.r.skip.join('p') parses string like " p p  p "
+    def join inter, &p
+      inter = Rsec.make_parser inter
+      Join[self, inter].map p
+    end
 
-  # when parsing failed, show "expect tokens" error
-  def fail *tokens, &p
-    return self if tokens.empty?
-    Fail[self, tokens].map p
-  end
+    # branch
+    def | y, &p
+      y = Rsec.make_parser y
+      arr =
+        if (is_a?(Branch) and !p)
+          [*parsers, y]
+        else
+          [self, y]
+        end
+      Branch[arr].map p
+    end
 
-  # ----------------------------------------------------------------------------
-  # Unary
+    # repeat n or in a range<br/>
+    def * n, &p
+      parser =
+        if n.is_a?(Range)
+          raise "invalid n: #{n}" if n.begin < 0
+          if n.end > 0
+            RepeatRange[self, n]
+          else
+            RepeatAtLeastN[self, n.begin]
+          end
+        else
+          raise "invalid n: #{n}" if n < 0
+          RepeatN[self, n]
+        end
+      parser.map p
+    end
 
-  # should be eof after parse
-  def eof &p
-    Eof[self].map p
-  end
+    # repeat at least n<br/>
+    # [n, inf)
+    def ** n, &p
+      raise "invalid n: #{n}" if n < 0
+      RepeatAtLeastN[self, n].map p
+    end
 
-  # maybe parser<br/>
-  # appears 0 or 1 times, result is not wrapped in an array
-  def maybe &p
-    Maybe[self].map p
-  end
-  alias _? maybe
-  
-  # to skip node
-  def skip &p
-    Skip[self].map p
-  end
+    # look ahead
+    def & other, &p
+      other = Rsec.make_parser other
+      LookAhead[self, other].map p
+    end
 
-  # return a parser that caches parse result, may optimize performance
-  def cached &p
-    Cached[self].map p
+    # negative look ahead
+    def ^ other, &p
+      other = Rsec.make_parser other
+      NegativeLookAhead[self, other].map p
+    end
+
+    # when parsing failed, show "expect tokens" error
+    def fail *tokens, &p
+      return self if tokens.empty?
+      Fail[self, tokens].map p
+    end
+
+    # should be eof after parse
+    def eof &p
+      Eof[self].map p
+    end
+
+    # maybe parser<br/>
+    # appears 0 or 1 times, result is not wrapped in an array
+    def maybe &p
+      Maybe[self].map p
+    end
+    alias _? maybe
+    
+    # to skip node
+    def skip &p
+      Skip[self].map p
+    end
+
+    # return a parser that caches parse result, may optimize performance
+    def cached &p
+      Cached[self].map p
+    end
   end
 
   # ------------------------------------------------------------------------------
@@ -305,11 +303,14 @@ module Rsec #:nodoc:
     end
   end
 
+  # ------------------------------------------------------------------------------
+  # util methods for parser generation
+
   # ensure x is a parser
   def Rsec.make_parser x
-    return x if x.is_a?(::Rsec)
+    return x if x.is_a?(Parser)
     x = x.send(TO_PARSER_METHOD) if x.respond_to?(TO_PARSER_METHOD)
-    Rsec.assert_type x, Rsec
+    Rsec.assert_type x, Parser
     x
   end
 
@@ -319,7 +320,7 @@ module Rsec #:nodoc:
   end
 end
 
-class String
+class String #:nodoc:
   # String#r: convert self to parser
   # convienient string-to-parser transformer
   define_method ::Rsec::TO_PARSER_METHOD, ->(*expects, &p){
@@ -327,7 +328,7 @@ class String
   }
 end
 
-class Regexp
+class Regexp #:nodoc:
   # Regexp#r: convert self to parser
   # convienient regexp-to-parser transformer
   define_method ::Rsec::TO_PARSER_METHOD, ->(*expects, &p){

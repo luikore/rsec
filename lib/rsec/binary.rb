@@ -6,7 +6,7 @@ module Rsec #:nodoc:
   # binary combinator base
   Binary = Struct.new :left, :right
   class Binary
-    include ::Rsec
+    include Parser
   end
 
   # transform parse result
@@ -53,7 +53,7 @@ module Rsec #:nodoc:
 
   # Join base
   class Join
-    include Rsec
+    include Parser
 
     def self.[] token, inter
       self.new token, inter
@@ -95,7 +95,7 @@ module Rsec #:nodoc:
   # note: range's max should always be > 0<br/>
   #       see also helpers
   class RepeatRange
-    include Rsec
+    include Parser
 
     def self.[] base, range
       self.new base, range
@@ -125,7 +125,7 @@ module Rsec #:nodoc:
 
   # base for RepeatN and RepeatAtLeastN
   class RepeatXN
-    include Rsec
+    include Parser
 
     def self.[] base, n
       self.new base, n

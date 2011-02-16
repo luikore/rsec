@@ -89,14 +89,16 @@ static int is_hex(char* pointer) {
 		}\
 	}
 
+// stubs for unified macro
 #define int_stub strtol
 #define float_stub strtod
 
 DEFINE_PARSER(parse_double, double, strtod, int_stub, DBL2NUM, 1);
+// XXX it is hard for pure ruby to determine single precision
 // DEFINE_PARSER(parse_float,  float,  strtof, int_stub, DBL2NUM, 1);
 DEFINE_PARSER(parse_int32, long,                        float_stub, strtol,   INT2NUM,  0);
 DEFINE_PARSER(parse_unsigned_int32, unsigned long,      float_stub, strtoul,  UINT2NUM, 0);
-// VC has no strtoll / strtoull
+// XXX VC has no strtoll / strtoull
 // DEFINE_PARSER(parse_int64, long long,                   float_stub, strtoll,  LL2NUM,   0);
 // DEFINE_PARSER(parse_unsigned_int64, unsigned long long, float_stub, strtoull, ULL2NUM,  0);
 
@@ -113,25 +115,60 @@ DEFINE_PARSER(parse_unsigned_int32, unsigned long,      float_stub, strtoul,  UI
 static VALUE parse_seq(VALUE self, VALUE ctx) {
 	VALUE arr = RSTRUCT_PTR(self)[0];
 	VALUE* parsers = RARRAY_PTR(arr);
-	if (parsers) {
-		int len = RARRAY_LEN(arr);
-		VALUE ret = rb_ary_new2(len);
-		// VALUE args[] = {Qnil, ctx};
+	int len = RARRAY_LEN(arr);
+	VALUE ret = rb_ary_new2(len);
+	int i;
+	VALUE res;
+
+	// We can't benefit from loop unwinding -_-
+	for (i = 0; i < len; i++) {
+		res = call_parse(parsers[i], ctx);
+		if (res == invalid) return invalid;
+		if (res != skip) rb_ary_push(ret, res);
+	}
+	return ret;
+}
+
+static VALUE parse_seq_one(VALUE self, VALUE ctx) {
+	VALUE arr = RSTRUCT_PTR(self)[0];
+	VALUE* parsers = RARRAY_PTR(arr);
+	int len = RARRAY_LEN(arr);
+	VALUE ret = rb_ary_new2(len);
+	int i;
+	VALUE res;
+
+	// We can't benefit from loop unwinding -_-
+	for (i = 0; i < len; i++) {
+		res = call_parse(parsers[i], ctx);
+		if (res == invalid) return invalid;
+		if (res != skip) rb_ary_push(ret, res);
+	}
+	return ret;
+}
+
+static VALUE parse_seq_(VALUE self, VALUE ctx) {
+	VALUE* struct_ptr = RSTRUCT_PTR(self);
+	VALUE first = struct_ptr[0];
+	volatile VALUE res = call_parse(first, ctx);
+	if (res == invalid) {
+		return invalid;
+	} else {
+		VALUE* rest = RARRAY_PTR(struct_ptr[1]);
+		VALUE skipper = struct_ptr[2];
+		int len = RARRAY_LEN(struct_ptr[1]);
+		volatile VALUE ret = rb_ary_new2(len + 1);
 		int i;
-		VALUE res;
-		// We can't get benefit from loop unwinding -_-
+
+		if (res != skip) rb_ary_push(ret, res);
+
 		for (i = 0; i < len; i++) {
-			// int error;
-			// args[0] = parsers[i];
-			// res = rb_protect(_wrap_parse, (VALUE)args, &error);
-			// if (error) return Qnil; // let ruby handle error
-			res = call_parse(parsers[i], ctx);
+			res = call_parse(skipper, ctx);
+			if (res == invalid) return invalid;
+			res = call_parse(rest[i], ctx);
 			if (res == invalid) return invalid;
 			if (res != skip) rb_ary_push(ret, res);
 		}
 		return ret;
-	} else {
-		rb_raise(rb_eRuntimeError, "seq is not an array!");
 	}
 }
 
@@ -421,11 +458,43 @@ static VALUE parse_map(VALUE self, VALUE ctx) {
 
 
 // -----------------------------------------------------------------------------
-// faster ParseContext.on_fail
+// faster Fail parse
 
 
+// function like ParseContext.on_fail, but don't re-define it
 static VALUE parse_context_on_fail(VALUE self, VALUE tokens) {
-	return 0; // TODO complete c side parse context
+	struct strscanner* ss = 0;
+	Data_Get_Struct(self, struct strscanner, ss);
+	if (ss) {
+		int pos = ss->curr;
+		int last_fail_pos = NUM2INT(rb_ivar_get(self, rb_intern("@last_fail_pos")));
+		if (pos > last_fail_pos) {
+			rb_ivar_set(self, rb_intern("@last_fail_pos"), INT2NUM(pos));
+			rb_ivar_set(self, rb_intern("@last_fail_tokens"), tokens);
+		} else if (pos == last_fail_pos) {
+			VALUE last_fail_tokens = rb_ivar_get(self, rb_intern("@last_fail_tokens"));
+			VALUE* tptr = RARRAY_PTR(tokens);
+			int tlen = RARRAY_LEN(tokens);
+			int i, j;
+			for (i = 0; i < tlen; i++) {
+				VALUE token = tptr[i];
+				if (! RTEST(rb_ary_includes(last_fail_tokens, token)))
+					rb_ary_push(last_fail_tokens, token);
+			}
+			rb_ivar_set(self, rb_intern("@last_fail_tokens"), last_fail_tokens);
+		}
+	}
+	return Qnil;
+}
+
+static VALUE parse_fail(VALUE self, VALUE ctx) {
+	VALUE left = RSTRUCT_PTR(self)[0];
+	VALUE right = RSTRUCT_PTR(self)[1];
+	VALUE res = call_parse(left, ctx);
+	if (res == invalid) {
+		parse_context_on_fail(ctx, right);
+	}
+	return res;
 }
 
 
@@ -461,6 +530,7 @@ Init_predef() {
 	// REDEFINE("PUnsignedInt64", parse_unsigned_int64);
 
 	REDEFINE("Seq", parse_seq);
+	REDEFINE("Seq_", parse_seq_);
 	REDEFINE("Branch", parse_branch);
 	REDEFINE("FixString", parse_string);
 	REDEFINE("Byte", parse_byte);
@@ -472,6 +542,7 @@ Init_predef() {
 	REDEFINE("SpacedOneOfByte", parse_spaced_one_of_byte);
 	REDEFINE("Join", parse_join);
 	REDEFINE("Map", parse_map);
+	REDEFINE("Fail", parse_fail);
 
 #	undef REDEFINE
 }

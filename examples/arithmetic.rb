@@ -11,11 +11,11 @@ def arithmetic
     end
   end
 
-  num    = prim :double
+  num    = prim(:double).fail 'number'
   paren  = lazy{expr}.wrap_ '()'
   factor = num | paren
-  term   = factor.join(one_of_('*/%')).map &calculate
-  expr   = term.join(one_of_('+-')).map &calculate
+  term   = factor.join(one_of_('*/%').fail 'operator').map &calculate
+  expr   = term.join(one_of_('+-').fail 'operator').map &calculate
   expr.eof
 end
 

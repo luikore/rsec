@@ -20,7 +20,7 @@ class TSeq < TC
   end
 
   def test_seq_mix
-    p = seq('e', seq('a','b','c'), 'd')
+    p = seq('e', seq_('a','b','c'), 'd')
     ase ['e', ['a','b','c'], 'd'], p.parse('eabcd')
   end
   
@@ -28,6 +28,13 @@ class TSeq < TC
     p = seq('a', 'b', 'c')[1]
     ase 'b', p.parse('abc')
     p = seq('abc', /\s*/.r.skip, 'd')[2]
+    ase 'd', p.parse('abc d')
+  end
+
+  def test_seq_one_skip
+    p = seq_('a', 'b', 'c')[1]
+    ase 'b', p.parse('a bc')
+    p = seq_('abc', /\s*/.r.skip, 'd')[2]
     ase 'd', p.parse('abc d')
   end
 end

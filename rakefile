@@ -49,7 +49,7 @@ end
 desc 'build gems'
 task 'gem' do
   system 'gem build rsec.gemspec'
-  system 'gem build rsec_ext.gemspec'
+  system 'gem build rsec-ext.gemspec'
 end
 
 desc 'install gems'

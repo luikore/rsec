@@ -24,7 +24,8 @@ module Rsec
 end
 
 require "strscan"
-require "rsec/base"
+require "rsec/parser"
+require "rsec/utils"
 require "rsec/unary"
 require "rsec/binary"
 require "rsec/xnary"
