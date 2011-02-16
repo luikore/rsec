@@ -36,7 +36,7 @@ module Rsec #:nodoc:
       @source = source
       @cache = {}
       @last_fail_pos = 0
-      @last_fail_tokens = []
+      @last_fail_mask = 0
     end
     
     # clear packrat parser cache
@@ -45,12 +45,12 @@ module Rsec #:nodoc:
     end
 
     # add fail message
-    def on_fail tokens
+    def on_fail mask
       if pos > @last_fail_pos
         @last_fail_pos = pos
-        @last_fail_tokens = tokens
+        @last_fail_mask = mask
       elsif pos == @last_fail_pos
-        @last_fail_tokens += (tokens - @last_fail_tokens)
+        @last_fail_mask |= mask
       end
     end
 
@@ -60,7 +60,8 @@ module Rsec #:nodoc:
         line = line @last_fail_pos
         col = col @last_fail_pos
         line_text = line_text @last_fail_pos
-        expects = ", expect token [ #{@last_fail_tokens.join ' | '} ]"
+        expect_tokens = Fail.get_tokens @last_fail_mask
+        expects = ", expect token [ #{expect_tokens.join ' | '} ]"
       else
         line = line pos
         col = col pos

@@ -21,6 +21,37 @@ module Rsec #:nodoc:
   # set expect tokens for parsing error in ctx<br/>
   # if left failed, the error would be registered
   class Fail < Binary
+    def Fail.[] left, tokens
+      # TODO mutex
+      # TODO refactor to Rsec
+      @mask_bit ||= 0
+      @token_table ||= []
+      if @mask_bit > 1000
+        raise "You've created too many fail parsers, If it is your intention, call Rsec::Fail.reset when previous expect settings can be thrown away."
+      end
+      parser = super(left, (1<<@mask_bit))
+      @token_table[@mask_bit] = tokens
+      @mask_bit += 1
+      parser
+    end
+
+    def Fail.reset
+      @mask_bit = 0
+      @token_table = []
+    end
+
+    def Fail.get_tokens mask
+      res = []
+      @token_table.each_with_index do |tokens, idx|
+        next unless tokens
+        if (mask & (1<<idx)) > 0
+          res += tokens
+        end
+      end
+      res.uniq!
+      res
+    end
+
     def _parse ctx
       res = left()._parse ctx
       ctx.on_fail right if INVALID[res]

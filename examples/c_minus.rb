@@ -1,3 +1,5 @@
+$:.unshift '../lib'
+module Rsec; USE_CEXT = :no; end
 require "rsec"
 
 class CMinus
