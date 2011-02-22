@@ -12,7 +12,7 @@ def arithmetic
   end
 
   num    = prim(:double).fail 'number'
-  paren  = lazy{expr}.wrap_ '()'
+  paren  = seq_('(', lazy{expr}, ')')[1]
   factor = num | paren
   term   = factor.join(one_of_('*/%').fail 'operator').map &calculate
   expr   = term.join(one_of_('+-').fail 'operator').map &calculate

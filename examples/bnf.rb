@@ -11,7 +11,7 @@ def bnf
   literal   = /".*?"|'.*?'/.r
   rule_name = /\<.*?\>/
   term      = literal | rule_name
-  list      = term.join nbsp.skip
+  list      = term.join(nbsp).even
   expr      = list.join seq(nbsp, '|', nbsp)[1]
   rule      = seq_ rule_name, '::=', expr
   spacee.join(rule).eof

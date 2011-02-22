@@ -3,7 +3,7 @@ $:.unshift "#{File.dirname __FILE__}/../examples"
 require "arithmetic"
 require "s_exp"
 
-class TExamples < TC
+class TestExamples < TC
   def initialize *xs
     super(*xs)
     @a = arithmetic()
@@ -25,11 +25,11 @@ class TExamples < TC
   end
   
   def test_s_exp
-    res = @s_exp.parse '(a 3 4.3 (add 1 3) (minus (multi 4 5)))'
+    res = @s_exp.parse! '(a 3 4.3 (add 1 3) (minus (multi 4 5)))'
     expected = ['a', 3.0, 4.3, ['add', 1, 3], ['minus', ['multi', 4, 5]]]
     ase expected, res
     
-    res = @s_exp.parse '(a (3) ce2 (add 1 3))'
+    res = @s_exp.parse! '(a (3) ce2 (add 1 3))'
     expected = ['a', 3.0, 'ce2', ['add', 1, 3]]
     ase expected, res
   end

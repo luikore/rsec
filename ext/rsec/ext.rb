@@ -1,41 +1,19 @@
 module Rsec #:nodoc:
-  # make skipping a string faster
-  class SkipFixString < Unary
-    def until &p
-      parser = SkipUntilPattern[Regexp.new Regexp.escape some()]
-      p ? parser.map(&p) : parser
-    end
-  end
 
   # make normal string parsing faster
   class FixString < Unary
-    def skip &p
-      parser = SkipFixString[some()]
-      p ? parser.map(&p) : parser
-    end
     def until &p
-      parser = UntilPattern[Regexp.new Regexp.escape some()]
-      p ? parser.map(&p) : parser
+      UntilPattern[Regexp.new Regexp.escape some()].map &p
     end
-  end
 
-  # make skipping a byte faster
-  class SkipByte < Unary
-    def until &p
-      parser = SkipUntilPattern[Regexp.new Regexp.escape some()]
-      p ? parser.map(&p) : parser
+    def as_word &p
+      Pattern[/\b#{Regexp.escape some}\b/].map p
     end
-  end
 
-  # make normal string parsing faster
-  class Byte < Unary
-    def skip &p
-      parser = SkipByte[some()]
-      p ? parser.map(&p) : parser
-    end
-    def until &p
-      parser = UntilPattern[Regexp.new Regexp.escape some()]
-      p ? parser.map(&p) : parser
+    # wrap with optional space by default
+    def wrap skip=/\s*/, &p
+      skip = Rsec.try_skip_pattern Rsec.make_parser skip
+      SeqOne[[skip, Pattern[/\b#{Regexp.escape some}\b/], skip], 1]
     end
   end
 
@@ -44,15 +22,7 @@ module Rsec #:nodoc:
   end
 
   # optimize one_of_() for byte-only string
-  class SpacedOneOfByte < SpacedOneOf
-  end
-
-  # optimize wrap() for byte-only string
-  class WrapByte < Wrap
-  end
-
-  # optimize wrap_() for byte-only string
-  class SpacedWrapByte < SpacedWrap
+  class OneOfByte_ < OneOf_
   end
 
   # overwrite prim initializer
@@ -70,14 +40,8 @@ require "rsec/predef"
 class String
   # overwrite string-to-parser transformer
   define_method ::Rsec::TO_PARSER_METHOD, ->(*expects, &p){
-    parser = \
-      if self.bytesize == 1
-        ::Rsec::Byte[self]
-      else
-        ::Rsec::FixString[self]
-      end
-    parser = parser.fail(*expects)
-    p ? parser.map(&p) : parser
+    parser = ::Rsec::FixString[self]
+    parser.fail(*expects).map &p
   }
 end
 

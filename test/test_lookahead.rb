@@ -1,6 +1,6 @@
 require "#{File.dirname(__FILE__)}/helpers.rb"
 
-class TLookAhead < TC
+class TestLookAhead < TC
   def test_lookahead
     p1 = 'a'.r & 'b'
     p2 = /\w/.r

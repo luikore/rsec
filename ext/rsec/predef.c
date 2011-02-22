@@ -8,7 +8,6 @@
 
 
 static VALUE invalid;
-static VALUE skip;
 static ID ID_parse;
 
 struct strscanner {
@@ -95,12 +94,9 @@ static int is_hex(char* pointer) {
 
 DEFINE_PARSER(parse_double, double, strtod, int_stub, DBL2NUM, 1);
 // XXX it is hard for pure ruby to determine single precision
-// DEFINE_PARSER(parse_float,  float,  strtof, int_stub, DBL2NUM, 1);
 DEFINE_PARSER(parse_int32, long,                        float_stub, strtol,   INT2NUM,  0);
 DEFINE_PARSER(parse_unsigned_int32, unsigned long,      float_stub, strtoul,  UINT2NUM, 0);
 // XXX VC has no strtoll / strtoull
-// DEFINE_PARSER(parse_int64, long long,                   float_stub, strtoll,  LL2NUM,   0);
-// DEFINE_PARSER(parse_unsigned_int64, unsigned long long, float_stub, strtoull, ULL2NUM,  0);
 
 #undef int_stub
 #undef float_stub
@@ -116,32 +112,33 @@ static VALUE parse_seq(VALUE self, VALUE ctx) {
 	VALUE arr = RSTRUCT_PTR(self)[0];
 	VALUE* parsers = RARRAY_PTR(arr);
 	int len = RARRAY_LEN(arr);
-	VALUE ret = rb_ary_new2(len);
+	volatile VALUE ret = rb_ary_new2(len);
 	int i;
-	VALUE res;
+	volatile VALUE res = 0;
 
 	// We can't benefit from loop unwinding -_-
 	for (i = 0; i < len; i++) {
 		res = call_parse(parsers[i], ctx);
 		if (res == invalid) return invalid;
-		if (res != skip) rb_ary_push(ret, res);
+		rb_ary_push(ret, res);
 	}
 	return ret;
 }
 
 static VALUE parse_seq_one(VALUE self, VALUE ctx) {
 	VALUE arr = RSTRUCT_PTR(self)[0];
+	int idx = NUM2INT(RSTRUCT_PTR(self)[1]);
 	VALUE* parsers = RARRAY_PTR(arr);
 	int len = RARRAY_LEN(arr);
-	VALUE ret = rb_ary_new2(len);
+	VALUE ret = invalid;
+	volatile VALUE res = 0;
 	int i;
-	VALUE res;
 
 	// We can't benefit from loop unwinding -_-
 	for (i = 0; i < len; i++) {
 		res = call_parse(parsers[i], ctx);
 		if (res == invalid) return invalid;
-		if (res != skip) rb_ary_push(ret, res);
+		if (i == idx) ret = res;
 	}
 	return ret;
 }
@@ -159,14 +156,40 @@ static VALUE parse_seq_(VALUE self, VALUE ctx) {
 		volatile VALUE ret = rb_ary_new2(len + 1);
 		int i;
 
-		if (res != skip) rb_ary_push(ret, res);
-
+		rb_ary_push(ret, res);
 		for (i = 0; i < len; i++) {
 			res = call_parse(skipper, ctx);
 			if (res == invalid) return invalid;
 			res = call_parse(rest[i], ctx);
 			if (res == invalid) return invalid;
-			if (res != skip) rb_ary_push(ret, res);
+			rb_ary_push(ret, res);
+		}
+		return ret;
+	}
+}
+
+static VALUE parse_seq_one_(VALUE self, VALUE ctx) {
+	VALUE* struct_ptr = RSTRUCT_PTR(self);
+	VALUE first = struct_ptr[0];
+	volatile VALUE res = call_parse(first, ctx);
+	volatile VALUE ret = 0;
+	if (res == invalid) {
+		return invalid;
+	} else {
+		VALUE* rest = RARRAY_PTR(struct_ptr[1]);
+		VALUE skipper = struct_ptr[2];
+		int idx = NUM2INT(struct_ptr[3]);
+		int len = RARRAY_LEN(struct_ptr[1]);
+		int i;
+
+		if (0 == idx) ret = res;
+		idx--;
+		for (i = 0; i < len; i++) {
+			res = call_parse(skipper, ctx);
+			if (res == invalid) return invalid;
+			res = call_parse(rest[i], ctx);
+			if (res == invalid) return invalid;
+			if (i == idx) ret = res;
 		}
 		return ret;
 	}
@@ -199,7 +222,7 @@ static VALUE parse_branch(VALUE self, VALUE ctx) {
 // fast string parser
 
 
-static VALUE parse_string(VALUE self, VALUE ctx) {
+static VALUE parse_fix_string(VALUE self, VALUE ctx) {
 	struct strscanner* ss;
 	int i, len;
 	char* s1; // pattern
@@ -219,136 +242,6 @@ static VALUE parse_string(VALUE self, VALUE ctx) {
 	ss->curr += len;
 	return pattern; // self.some() is already frozen
 }
-
-static VALUE parse_skip_string(VALUE self, VALUE ctx) {
-	struct strscanner* ss;
-	int i, len;
-	char* s1; // pattern
-	char* s2;
-	Data_Get_Struct(ctx, struct strscanner, ss);
-	VALUE pattern = RSTRUCT_PTR(self)[0]; // hack for self.some()
-	s1 = RSTRING_PTR(pattern);
-	len = RSTRING_LEN(pattern);
-	if (ss->curr + len > RSTRING_LEN(ss->str))
-		return invalid;
-	s2 = RSTRING_PTR(ss->str) + ss->curr;
-	for (i = 0; i < len; i++) {
-		if (s1[i] != s2[i])
-			return invalid;
-	}
-	ss->prev = ss->curr;
-	ss->curr += len;
-	return skip;
-}
-
-
-// -----------------------------------------------------------------------------
-// fast byte parsers
-
-
-static VALUE parse_byte(VALUE self, VALUE ctx) {
-	struct strscanner* ss;
-	int i, len;
-	VALUE chr;
-	Data_Get_Struct(ctx, struct strscanner, ss);
-	if (ss->curr >= RSTRING_LEN(ss->str))
-		return invalid;
-	chr = RSTRUCT_PTR(self)[0]; // hack for self.some(), chr is already frozen
-	if (RSTRING_PTR(ss->str)[ss->curr] != RSTRING_PTR(chr)[0])
-		return invalid;
-	ss->prev = ss->curr;
-	ss->curr ++;
-	return chr;
-}
-
-static VALUE parse_skip_byte(VALUE self, VALUE ctx) {
-	struct strscanner* ss;
-	int i, len;
-	VALUE chr;
-	Data_Get_Struct(ctx, struct strscanner, ss);
-	if (ss->curr >= RSTRING_LEN(ss->str))
-		return invalid;
-	chr = RSTRUCT_PTR(self)[0]; // hack for self.some(), chr is already frozen
-	if (RSTRING_PTR(ss->str)[ss->curr] != RSTRING_PTR(chr)[0])
-		return invalid;
-	ss->prev = ss->curr;
-	ss->curr ++;
-	return skip;
-}
-
-
-// -----------------------------------------------------------------------------
-// parens enchance
-
-
-#define SKIP_SPACE(ptr) \
-	for(;;) {\
-		if (ss->curr >= limit) return invalid;\
-		if (! isspace(ptr[ss->curr])) break;\
-		ss->curr ++;\
-	}
-
-
-static VALUE parse_wrap(VALUE self, VALUE ctx) {
-	VALUE* data = RSTRUCT_PTR(self);
-	struct strscanner* ss;
-	char start = RSTRING_PTR(data[1])[0];
-	char end = RSTRING_PTR(data[1])[1];
-	VALUE res;
-	char* ptr;
-	int limit;
-
-	// prepare
-	Data_Get_Struct(ctx, struct strscanner, ss);
-	limit = RSTRING_LEN(ss->str);
-	ptr = RSTRING_PTR(ss->str);
-
-	// start
-	if (ss->curr >= limit || ptr[ss->curr++] != start)
-		return invalid;
-	// term
-	res = call_parse(data[0], ctx);
-	// end
-	if (res == invalid || ptr[ss->curr++] != end)
-		return invalid;
-	return res;
-	
-}
-
-static VALUE parse_spaced_wrap(VALUE self, VALUE ctx) {
-	VALUE* data = RSTRUCT_PTR(self);
-	struct strscanner* ss;
-	char start = RSTRING_PTR(data[1])[0];
-	char end = RSTRING_PTR(data[1])[1];
-	VALUE res;
-	char* ptr;
-	int limit;
-
-	// prepare
-	Data_Get_Struct(ctx, struct strscanner, ss);
-	limit = RSTRING_LEN(ss->str);
-	ptr = RSTRING_PTR(ss->str);
-
-	// start
-	if (ss->curr >= limit || ptr[ss->curr++] != start)
-		return invalid;
-	SKIP_SPACE(ptr);
-	// term
-	res = call_parse(data[0], ctx);
-	if (res == invalid)
-		return invalid;
-	SKIP_SPACE(ptr);
-	// end
-	if (ptr[ss->curr++] != end)
-		return invalid;
-	return res;
-
-}
-
-
-// -----------------------------------------------------------------------------
-// one of byte parser
-
 
 static VALUE parse_one_of_byte(VALUE self, VALUE ctx) {
 	VALUE bytes = RSTRUCT_PTR(self)[0];
@@ -372,7 +265,7 @@ static VALUE parse_one_of_byte(VALUE self, VALUE ctx) {
 	return invalid;
 }
 
-static VALUE parse_spaced_one_of_byte(VALUE self, VALUE ctx) {
+static VALUE parse_one_of_byte_(VALUE self, VALUE ctx) {
 	VALUE bytes = RSTRUCT_PTR(self)[0];
 	char* bytes_ptr = RSTRING_PTR(bytes);
 	int len = RSTRING_LEN(bytes);
@@ -385,12 +278,18 @@ static VALUE parse_spaced_one_of_byte(VALUE self, VALUE ctx) {
 	limit = RSTRING_LEN(ss->str);
 	ptr = RSTRING_PTR(ss->str);
 
-	SKIP_SPACE(ptr);
+	// skip space
+	for(;;) {
+		// it is sure invalid because char cannot be epsilon
+		if (ss->curr >= limit) return invalid;
+		if (! isspace(ptr[ss->curr])) break;
+		ss->curr ++;
+	}
 	chr = ptr[ss->curr];
 	for (i = 0; i < len; i++) {
 		if (chr == bytes_ptr[i]) {
 			ss->curr ++;
-			// space
+			// skip space
 			for (;;) {
 				if (ss->curr >= limit) break; // still valid
 				if (! isspace(ptr[ss->curr])) break;
@@ -404,25 +303,29 @@ static VALUE parse_spaced_one_of_byte(VALUE self, VALUE ctx) {
 }
 
 
-#undef SKIP_SPACE
-
-
 // -----------------------------------------------------------------------------
-// faster join parser
+// other
 
 
-static VALUE parse_join(VALUE self, VALUE ctx) {
-	VALUE token = rb_iv_get(self, "@token");
-	VALUE inter = rb_iv_get(self, "@inter");
+// keep =
+//   1: keep inter only
+//   2: keep token only
+//   3: keep both
+static VALUE proto_parse_join(VALUE self, VALUE ctx, int keep) {
+	VALUE token = RSTRUCT_PTR(self)[0];
+	VALUE inter = RSTRUCT_PTR(self)[1];
 	struct strscanner* ss;
-	VALUE i, t, node;
+	volatile VALUE i = 0;
+	volatile VALUE t = 0;
+	volatile VALUE node = 0; // result
 	int save_point;
 
 	// pure translation of ruby code
 	t = call_parse(token, ctx);
 	if (t == invalid) return t;
 	node = rb_ary_new();
-	if (t != skip) rb_ary_push(node, t);
+	if (keep & 2)
+		rb_ary_push(node, t);
 
 	Data_Get_Struct(ctx, struct strscanner, ss);
 	for(;;) {
@@ -438,16 +341,23 @@ static VALUE parse_join(VALUE self, VALUE ctx) {
 			break;
 		}
 		if (save_point == ss->curr) break;
-		if (i != skip) rb_ary_push(node, i);
-		if (t != skip) rb_ary_push(node, t);
+		if (keep & 1) rb_ary_push(node, i);
+		if (keep & 2) rb_ary_push(node, t);
 	}
 	return node;
 }
 
+static VALUE parse_join(VALUE self, VALUE ctx) {
+	return proto_parse_join(self, ctx, 3);
+}
 
-// -----------------------------------------------------------------------------
-// faster map parser
+static VALUE parse_join_even(VALUE self, VALUE ctx) {
+	return proto_parse_join(self, ctx, 2);
+}
 
+static VALUE parse_join_odd(VALUE self, VALUE ctx) {
+	return proto_parse_join(self, ctx, 1);
+}
 
 static VALUE parse_map(VALUE self, VALUE ctx) {
 	VALUE* data = RSTRUCT_PTR(self);
@@ -456,32 +366,21 @@ static VALUE parse_map(VALUE self, VALUE ctx) {
 	return rb_proc_call(data[1], rb_ary_new3(1, res));
 }
 
-
-// -----------------------------------------------------------------------------
-// faster Fail parse
-
-
 // function like ParseContext.on_fail, but don't re-define it
-static VALUE parse_context_on_fail(VALUE self, VALUE tokens) {
+static VALUE parse_context_on_fail(VALUE self, VALUE mask) {
 	struct strscanner* ss = 0;
 	Data_Get_Struct(self, struct strscanner, ss);
 	if (ss) {
 		int pos = ss->curr;
 		int last_fail_pos = NUM2INT(rb_ivar_get(self, rb_intern("@last_fail_pos")));
 		if (pos > last_fail_pos) {
+			volatile VALUE new_fail_pos = INT2NUM(pos);
 			rb_ivar_set(self, rb_intern("@last_fail_pos"), INT2NUM(pos));
-			rb_ivar_set(self, rb_intern("@last_fail_tokens"), tokens);
+			rb_ivar_set(self, rb_intern("@last_fail_mask"), mask);
 		} else if (pos == last_fail_pos) {
-			VALUE last_fail_tokens = rb_ivar_get(self, rb_intern("@last_fail_tokens"));
-			VALUE* tptr = RARRAY_PTR(tokens);
-			int tlen = RARRAY_LEN(tokens);
-			int i, j;
-			for (i = 0; i < tlen; i++) {
-				VALUE token = tptr[i];
-				if (! RTEST(rb_ary_includes(last_fail_tokens, token)))
-					rb_ary_push(last_fail_tokens, token);
-			}
-			rb_ivar_set(self, rb_intern("@last_fail_tokens"), last_fail_tokens);
+			volatile VALUE last_fail_mask = rb_ivar_get(self, rb_intern("@last_fail_mask"));
+			last_fail_mask = rb_funcall(last_fail_mask, rb_intern("|"), 1, mask);
+			rb_ivar_set(self, rb_intern("@last_fail_mask"), last_fail_mask);
 		}
 	}
 	return Qnil;
@@ -490,7 +389,7 @@ static VALUE parse_context_on_fail(VALUE self, VALUE tokens) {
 static VALUE parse_fail(VALUE self, VALUE ctx) {
 	VALUE left = RSTRUCT_PTR(self)[0];
 	VALUE right = RSTRUCT_PTR(self)[1];
-	VALUE res = call_parse(left, ctx);
+	volatile VALUE res = call_parse(left, ctx);
 	if (res == invalid) {
 		parse_context_on_fail(ctx, right);
 	}
@@ -512,7 +411,6 @@ Init_predef() {
 	VALUE rsec = rb_define_module("Rsec");
 	VALUE predef = rb_define_class_under(rsec, "Predef", rb_cObject);
 	invalid = rb_const_get(rsec, rb_intern("INVALID"));
-	skip = rb_const_get(rsec, rb_intern("SKIP"));
 	ID_parse = rb_intern("_parse");
 	rb_include_module(predef, rsec);
 
@@ -531,16 +429,17 @@ Init_predef() {
 
 	REDEFINE("Seq", parse_seq);
 	REDEFINE("Seq_", parse_seq_);
+	REDEFINE("SeqOne", parse_seq_one);
+	REDEFINE("SeqOne_", parse_seq_one_);
 	REDEFINE("Branch", parse_branch);
-	REDEFINE("FixString", parse_string);
-	REDEFINE("Byte", parse_byte);
-	REDEFINE("SkipFixString", parse_skip_string);
-	REDEFINE("SkipByte", parse_skip_byte);
-	REDEFINE("Wrap", parse_wrap);
-	REDEFINE("SpacedWrap", parse_spaced_wrap);
+
+	REDEFINE("FixString", parse_fix_string);
 	REDEFINE("OneOfByte", parse_one_of_byte);
-	REDEFINE("SpacedOneOfByte", parse_spaced_one_of_byte);
+	REDEFINE("OneOfByte_", parse_one_of_byte_);
+
 	REDEFINE("Join", parse_join);
+	REDEFINE("JoinEven", parse_join_even);
+	REDEFINE("JoinOdd", parse_join_odd);
 	REDEFINE("Map", parse_map);
 	REDEFINE("Fail", parse_fail);
 

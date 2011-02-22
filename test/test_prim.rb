@@ -1,6 +1,6 @@
 require "#{File.dirname(__FILE__)}/helpers.rb"
 
-class TPrim < TC
+class TestPrim < TC
   def test_floating
     [:double].each do |ty|
       p = prim ty

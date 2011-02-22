@@ -8,3 +8,4 @@
 *.def
 nbproject/
 ext/rsec/Makefile
+website/

@@ -26,7 +26,7 @@ module Rsec #:nodoc:
       # TODO move
       @name ||= self.class.to_s[/\w+$/]
       case self
-      when Lazy, Dynamic
+      when Lazy
         "<#{name}>"
       when Binary
         "<#{name} #{left.inspect} #{right.inspect}>"
@@ -42,4 +42,23 @@ module Rsec #:nodoc:
       end
     end
   end
+
+  # parsers with 2 params base
+  Binary = Struct.new :left, :right
+  class Binary 
+    include Parser
+  end
+
+  # parsers with 1 param base
+  Unary = Struct.new :some
+  class Unary
+    include Parser
+  end
 end
+
+require "rsec/parsers/misc"
+require "rsec/parsers/seq"
+require "rsec/parsers/prim"
+require "rsec/parsers/join"
+require "rsec/parsers/repeat"
+

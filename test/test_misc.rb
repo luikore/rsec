@@ -1,6 +1,6 @@
 require "#{File.dirname(__FILE__)}/helpers.rb"
 
-class TMisc < TC
+class TestMisc < TC
   def test_lazy
     p1 = nil
     p2 = lazy{p1}
@@ -41,27 +41,16 @@ class TMisc < TC
   def test_fail
     p = 'v'.r.fail 'omg!'
     p.eof.parse! 'u'
-  rescue => e
+    assert false, "should raise syntax error"
+  rescue Rsec::SyntaxError => e
     assert e.to_s.index 'omg!'
   end
   
   def test_fail_with_block
     p = 'v'.r.fail('omg!'){ 'should fail' }
     p.eof.parse! 'u'
-  rescue => e
+    assert false, "should raise syntax error"
+  rescue Rsec::SyntaxError => e
     assert e.to_s.index 'omg!'
-  end
-
-  def test_maybe
-    [:_? , :maybe].each do |m|
-      p = seq('v', 'q').send m
-      ase SKIP, p.parse('')
-      ase INVALID, p.eof.parse('v')
-      ase ['v', 'q'], p.parse('vq')
-
-      # with map block
-      p = seq('v', 'q').maybe {|x| SKIP[x] ? SKIP : 'good' }
-      ase 'good', p.parse('vq')
-    end
   end
 end

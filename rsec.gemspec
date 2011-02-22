@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "rsec"
-  s.version = "0.1"
+  s.version = "0.3"
   s.author = "NS"
   s.homepage = "http://wiki.github.com/luikore/rsec"
   s.platform = Gem::Platform::RUBY

@@ -1,6 +1,6 @@
 require "#{File.dirname(__FILE__)}/helpers.rb"
 
-class TSeq < TC
+class TestSeq < TC
   def test_seq
     p = seq('a', 'b', 'c')
     ase ['a','b','c'], p.parse('abc')
@@ -11,7 +11,7 @@ class TSeq < TC
     ase INVALID, p.parse('ab')
   end
 
-  def test_seq_skip
+  def test_seq_
     p = seq_('abc', 'ef', 'vv')
     ase %w[abc ef vv], p.parse("abc    ef vv")
     p = seq_('abc', 'ef', 'vv', skip: /\s+/)
@@ -27,14 +27,25 @@ class TSeq < TC
   def test_seq_one
     p = seq('a', 'b', 'c')[1]
     ase 'b', p.parse('abc')
-    p = seq('abc', /\s*/.r.skip, 'd')[2]
+    p = seq('abc', /\s*/, 'd')[2]
     ase 'd', p.parse('abc d')
   end
 
-  def test_seq_one_skip
+  def test_seq_one_
     p = seq_('a', 'b', 'c')[1]
     ase 'b', p.parse('a bc')
-    p = seq_('abc', /\s*/.r.skip, 'd')[2]
+    p = seq_('abc', /\s*/, 'd')[2]
     ase 'd', p.parse('abc d')
+  end
+
+  def test_fall
+    p = 'a'.r >> 'b'
+    ase 'b', p.parse!('ab')
+    p = p << 'c'
+    ase 'b', p.parse!('abc')
+
+    p = p._?
+    ase ['b'], p.eof.parse!('abc')
+    ase [], p.eof.parse!('')
   end
 end

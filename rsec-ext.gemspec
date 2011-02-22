@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "rsec-ext"
-  s.version = "0.1"
+  s.version = "0.3"
   s.author = "NS"
   s.homepage = "http://wiki.github.com/luikore/rsec"
   s.platform = Gem::Platform::RUBY
@@ -15,6 +15,6 @@ Gem::Specification.new do |s|
   # s.has_rdoc = false
   s.extra_rdoc_files = ["readme.rdoc"]
 
-  s.add_dependency 'rsec', ['=0.1']
+  s.add_dependency 'rsec', ['=0.3']
 end
 

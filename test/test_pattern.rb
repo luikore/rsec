@@ -1,6 +1,6 @@
 require "#{File.dirname(__FILE__)}/helpers.rb"
 
-class TPattern < TC
+class TestPattern < TC
   def test_create
     p1 = 'x'.r
     asp 'x', p1
@@ -23,20 +23,6 @@ class TPattern < TC
     ase 'y', p.parse('x')
   end
 
-  def test_skip
-    p = 'ef'.r.skip
-    ase SKIP, p.parse('ef')
-    ase INVALID, p.parse('bb')
-
-    p = 'f'.r.skip
-    ase SKIP, p.parse('f')
-    ase INVALID, p.parse('x')
-
-    # with map block
-    p = 'f'.r.skip{ 'c' }
-    ase 'c', p.parse('f')
-  end
-
   def test_until
     p = 'ef'.r.until
     asp 'xef', p
@@ -51,14 +37,13 @@ class TPattern < TC
     ase 'xexe', p.parse('xe')
   end
 
-  def test_skip_until
-    p = /\d\w+\d/.r.until.skip
-    ase SKIP, p.parse("bcd\n3vve4")
-    ase INVALID, p.eof.parse("bcd\n3vve4-")
-
-    # with map block
-    p = /\d\w+\d/.r.until.skip{'good'}
-    ase 'good', p.parse("bcd\n3vve4")
-    ase INVALID, p.eof.parse("bcd\n3vve4-")
+  def test_word
+    #TODO
+    p = 'abc'.r.as_word
   end
+
+  def test_symbol
+    #TODO
+  end
+
 end

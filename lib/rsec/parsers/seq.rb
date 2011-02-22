@@ -1,25 +1,16 @@
-# coding: utf-8
-# ------------------------------------------------------------------------------
-# x-nary combinators
-
-module Rsec #:nodoc:
+module Rsec
 
   # sequence combinator<br/>
   # result in an array
-  class Seq < Struct.new(:parsers)
-    include Parser
-
+  class Seq < Unary
     def _parse ctx
-      ret = []
-      parsers.each do |e|
+      some.map do |e|
         res = e._parse ctx
         return INVALID if INVALID[res]
-        ret << res unless SKIP[res]
+        res
       end
-      ret
     end
   end
-
 
   # sequence combinator<br/>
   # the result is the result of the parser at idx
@@ -28,10 +19,10 @@ module Rsec #:nodoc:
 
     def _parse ctx
       ret = INVALID
-      parsers.each_with_index do |p, counter|
+      parsers.each_with_index do |p, i|
         res = p._parse ctx
         return INVALID if INVALID[res]
-        ret = res if counter == idx
+        ret = res if i == idx
       end
       ret
     end
@@ -44,14 +35,13 @@ module Rsec #:nodoc:
     def _parse ctx
       res = first._parse ctx
       return INVALID if INVALID[res]
-      ret = []
-      ret << res unless SKIP[res]
+      ret = [res]
 
       rest.each do |e|
         return INVALID if INVALID[skipper._parse ctx]
         res = e._parse ctx
         return INVALID if INVALID[res]
-        ret << res unless SKIP[res]
+        ret << res
       end
       ret
     end
@@ -62,34 +52,42 @@ module Rsec #:nodoc:
     include Parser
 
     def _parse ctx
+      ret = INVALID
+
       res = first._parse ctx
       return INVALID if INVALID[res]
       ret = res if 0 == idx
 
       check = idx - 1
-      rest.each_with_index do |p, counter|
+      rest.each_with_index do |p, i|
         return INVALID if INVALID[skipper._parse ctx]
         res = p._parse ctx
         return INVALID if INVALID[res]
-        ret = res if counter == check
+        ret = res if i == check
       end
       ret
     end
   end
 
-  # branch combinator<br/>
-  # result in one of the members, or INVALID
-  class Branch < Struct.new(:parsers)
-    include Parser
-
+  # unbox result size
+  # only work for seq and join and maybe'ed seq and join
+  class Unbox < Unary
     def _parse ctx
-      save_point = ctx.pos
-      parsers.each do |e|
-        res = e._parse ctx
-        return res unless INVALID[res]
-        ctx.pos = save_point
-      end
-      INVALID
+      res = some._parse ctx
+      return INVALID if INVALID[res]
+      res.size == 1 ? res.first : res
+    end
+  end
+
+  # inner
+  # only work for seq
+  class Inner < Unary
+    def _parse ctx
+      res = some._parse ctx
+      return INVALID if INVALID[res]
+      res.shift
+      res.pop
+      res
     end
   end
 

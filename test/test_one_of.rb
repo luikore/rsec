@@ -1,6 +1,6 @@
 require "#{File.dirname(__FILE__)}/helpers.rb"
 
-class TOneOf < TC
+class TestOneOf < TC
   def test_one_of
     p = one_of('abcd')
     ase 'c', p.parse('c')
@@ -27,11 +27,9 @@ class TOneOf < TC
     ase 'a', p.parse(' a')
     ase 'c', p.parse('c ')
 
-    begin
+    assert_raise(ArgumentError) {
       p = one_of_('')
-      assert false, "should raise exception for empty string"
-    rescue
-    end
+    }
 
     # with map block
     p = one_of_('w'){'v'}

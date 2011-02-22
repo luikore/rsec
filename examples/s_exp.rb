@@ -5,14 +5,13 @@ require "rsec"
 include Rsec::Helpers
 
 def s_exp
-  id    = /[a-zA-Z][\w\-]*/.r
-  num   = prim(:double)
-  space = /\s+/.r.skip
+  id    = /[a-zA-Z][\w\-]*/.r.fail 'id'
+  num   = prim(:double).fail 'num'
 
-  thing = id | num
-  paren = (lazy{exp} | thing).wrap_ '()'
-  term  = paren | thing
-  exp   = seq(id, space, term.join(space)._?){|arr| arr.flatten 1}
-  exp.wrap_('()').eof
+  naked_unit = id | num | seq_('(', lazy{exp}, ')')[1]
+  unit  = naked_unit | seq_('(', lazy{unit}, ')')[1]
+  units = unit.join(/\s+/).even._?.unbox
+  exp   = seq_(id, units) {|(id, units)| [id, *units]}
+  seq_('(', exp, ')')[1].eof
 end
 

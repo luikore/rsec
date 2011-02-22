@@ -11,24 +11,21 @@ module Rsec
     TO_PARSER_METHOD = :r
   end
 
-  # config use C extension strategy
+  # config C extension usage
   # options:
   #   :try - default
-  #   :no
-  #   :yes
+  #   :no  - don't use
+  #   :yes - use
   unless Rsec.const_defined?(:USE_CEXT)
     USE_CEXT = :try
   end
 
-  VERSION = '0.1'
+  VERSION = '0.3'
 end
 
 require "strscan"
-require "rsec/parser"
 require "rsec/utils"
-require "rsec/unary"
-require "rsec/binary"
-require "rsec/xnary"
+require "rsec/parser"
 require "rsec/helpers"
 
 case Rsec::USE_CEXT

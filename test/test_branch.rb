@@ -1,6 +1,6 @@
 require "#{File.dirname(__FILE__)}/helpers.rb"
 
-class TBranch < TC
+class TestBranch < TC
   def test_branch
     p = 'a'.r | /\d+/ | seq('c', 'd')
     ase ['c','d'], p.parse('cd')

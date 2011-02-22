@@ -103,16 +103,6 @@ module Rsec #:nodoc:
     end
   end
 
-  # the skip token
-  SKIP = Object.new
-  class << SKIP
-    def to_str
-      'SKIP_TOKEN'
-    end
-    alias :[] :==
-    alias inspect to_str
-  end
-
   # the invalid token
   INVALID = Object.new
   class << INVALID
