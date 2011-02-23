@@ -39,14 +39,13 @@ class Scheme
   end
 
   def initialize
-    spacee  = /\s*/.r.skip
     boolean = /\#[tf]/.    r {|n| Value[n=='#t'] }
     integer = /0|[1-9]\d*/.r {|n| Value[n.to_i]  }
     id      = /[^\s\(\)\[\]]+/.r
     atom    = boolean | integer | id
     cell    = atom | lazy{list}
-    cells   = spacee.join cell
-    list    = cells.wrap('()')
+    cells   = /\s*/.r.join(cell).odd
+    list    = '('.r >> cells << ')'
     @parser = cells.eof
 
     @vm = Bind.new
@@ -82,4 +81,4 @@ class Scheme
   end
 end
 
-Scheme.new.run File.read ARGV[0]
+ARGV[0] ? Scheme.new.run(File.read ARGV[0]) : puts('need a scheme file name')

@@ -12,7 +12,7 @@ def arithmetic
   end
 
   num    = prim(:double).fail 'number'
-  paren  = seq_('(', lazy{expr}, ')')[1]
+  paren  = '('.r >> lazy{expr} << ')'
   factor = num | paren
   term   = factor.join(one_of_('*/%').fail 'operator').map &calculate
   expr   = term.join(one_of_('+-').fail 'operator').map &calculate
@@ -20,6 +20,9 @@ def arithmetic
 end
 
 if __FILE__ == $PROGRAM_NAME
-  p one_of_('+-').class
+  print '1+ 2*4 = '
+  p arithmetic.parse! '1+ 2*4' #=> 9
+  print '1+ 2*/4 = '
+  p arithmetic.parse! '1+ 2*/4' #=> syntax error
 end
 

@@ -10,8 +10,8 @@ def s_exp
 
   naked_unit = id | num | seq_('(', lazy{exp}, ')')[1]
   unit  = naked_unit | seq_('(', lazy{unit}, ')')[1]
-  units = unit.join(/\s+/).even._?.unbox
-  exp   = seq_(id, units) {|(id, units)| [id, *units]}
+  units = unit.join(/\s+/).even._?
+  exp   = seq_(id, units) {|(id, (units))| [id, *units]}
   seq_('(', exp, ')')[1].eof
 end
 

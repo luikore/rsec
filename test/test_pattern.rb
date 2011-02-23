@@ -38,12 +38,16 @@ class TestPattern < TC
   end
 
   def test_word
-    #TODO
-    p = 'abc'.r.as_word
+    p = word('abc')
+    ase INVALID, p.parse('abcd')
+    ase INVALID, seq_(p, 'd').parse('abcd')
+    ase 'abc', p.parse('abc')
+    ase ['abc', 'd'], seq_(p, 'd').parse('abc d')
   end
 
   def test_symbol
-    #TODO
+    p = symbol('*')
+    ase '*', p.parse(' * ')
   end
 
 end
