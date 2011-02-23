@@ -8,10 +8,9 @@ module Rsec #:nodoc:
   # these are not callable from a parser
   module Helpers
  
-    # @ desc
+    # @ desc.helper
     #   lazy parser
     # @ example
-    #   include Rsec::Helper
     #   parser = lazy{future}
     #   future = 'jim'.r
     #   assert_equal 'jim', parser.parse '12323'
@@ -20,10 +19,9 @@ module Rsec #:nodoc:
       Lazy[p]
     end
     
-    # @ desc
+    # @ desc.helper
     #   parses one of chars in str
     # @ example
-    #   include Rsec::Helper
     #   multiplicative = one_of '*/%'
     #   assert_equal '/', multiplicative.parse '/'
     #   assert_equal Rsec::INVALID, actualmultiplicative.parse '+'
@@ -40,10 +38,9 @@ module Rsec #:nodoc:
       one_of_klass[str.dup.freeze].map p
     end
 
-    # @ desc
+    # @ desc.helper
     #   see also #one_of#, with leading and trailing optional breakable spaces
     # @ example
-    #   include Rsec::Helper
     #   additive = one_of_('+-')
     #   assert_equal '+', additive.parse('  +')
     def one_of_ str, &p
@@ -61,7 +58,7 @@ module Rsec #:nodoc:
       spaced_one_of_klass[str.dup.freeze].map p
     end
 
-    # @ desc
+    # @ desc.helper
     #   primitive parser, returns nil if overflow or underflow.
     #   There can be an optional '+' or '-' at the beginning of string except unsinged_int32 | unsinged_int64.
     #   type =
@@ -76,7 +73,6 @@ module Rsec #:nodoc:
     #     :allowed_signs => (same as :allowed_sign)
     #     :base => integer only (default 10)
     # @ example
-    #   include Rsec::Helper
     #   p = prim :double
     #   assert_equal 1.23, p.parse('1.23')
     #   p = prim :double, allowed_sign: '-'
@@ -123,18 +119,21 @@ module Rsec #:nodoc:
       parser.map p
     end
 
-    # @ desc
+    # @ desc.helper
     #   sequence parser
     # @ example
-    #   
+    #   assert_equal ['a', 'b', 'c'], actualseq('a', 'b', 'c').parse('abc')
     def seq *xs, &p
       xs.map! {|x| Rsec.make_parser x }
       Seq[xs].map p
     end
 
-    # sequence parser with skippable pattern(or parser)
-    # option
-    #   :skip default= /\s*/.r
+    # @ desc.helper
+    #   sequence parser with skippable pattern(or parser)
+    #   option
+    #     :skip default= /\s*/
+    # @ example
+    #   assert_equal ['a', 'b', 'c'], actualseq_('a', 'b', 'c', skip: ',').parse('a,b,c')
     def seq_ *xs, &p
       skipper = 
         if (xs.last.is_a? Hash)
@@ -147,14 +146,19 @@ module Rsec #:nodoc:
       Seq_[first, rest, skipper].map p
     end
 
-    # symbol parser
+    # @ desc.helper
+    #   a symbol is something wrapped with optional space
     def symbol pattern, skip=/\s*/, &p
       pattern = Rsec.make_parser pattern
       skip = Rsec.try_skip_pattern Rsec.make_parser skip
       SeqOne[[skip, pattern, skip], 1].map p
     end
 
-    # wrap with word boundary
+    # @ desc
+    #   a word is wrapped with word boundaries
+    # @ example
+    #   assert_equal ['yes', '3'], seq('yes', '3').parse('yes3')
+    #   assert_equal INVALID, seq(word('yes'), '3').parse('yes3')
     def word pattern, &p
       parser = Rsec.make_parser pattern
       # TODO check pattern type
@@ -170,7 +174,11 @@ module Rsec #:nodoc:
 
   module Parser #:nodoc:
 
-    # transform result
+    # @ desc
+    #   transform result
+    # @ example
+    #   parser = /\w+/.r.map{|word| word * 2}
+    #   assert_equal 'hellohello', parser.parse!('hello')
     def map lambda_p=nil, &p
       return self if (lambda_p.nil? and p.nil?)
       p = lambda_p || p
@@ -178,16 +186,19 @@ module Rsec #:nodoc:
       Map[self, p]
     end
 
-    # "p.join('+')" parses strings like "p+p+p+p+p".<br/>
-    # Note that at least 1 of p appears in the string.<br/>
-    # Sometimes it is useful to reverse the joining:<br/>
-    # /\s*/.r.join('p').odd parses string like " p p  p "
+    # @ desc
+    #   "p.join('+')" parses strings like "p+p+p+p+p".
+    #   Note that at least 1 of p appears in the string.
+    #   Sometimes it is useful to reverse the joining:
+    #   /\s*/.r.join('p').odd parses string like " p p  p "
     def join inter, &p
       inter = Rsec.make_parser inter
       Join[self, inter].map p
     end
 
-    # branch
+    # @ desc
+    #   Branch parser, note that rsec is a PEG parser generator,
+    #   beware of the difference between PEG and CFG.
     def | y, &p
       y = Rsec.make_parser y
       arr =
@@ -199,9 +210,10 @@ module Rsec #:nodoc:
       Branch[arr].map p
     end
 
-    # repeat n or in a range<br/>
-    # if range.end < 0, repeat at least range.begin<br/>
-    # (Infinity and -Infinity are considered)
+    # @ desc
+    #   repeat n or in a range
+    #   if range.end < 0, repeat at least range.begin
+    #   (Infinity and -Infinity are considered)
     def * n, &p
       # FIXME if self is an epsilon parser, will cause infinite loop
       parser =
@@ -223,57 +235,66 @@ module Rsec #:nodoc:
       parser.map p
     end
 
-    # maybe parser<br/>
-    # appears 0 or 1 times, result is wrapped in an array
+    # @ desc
+    #   maybe parser
+    #   appears 0 or 1 times, result is wrapped in an array
     def maybe &p
       Maybe[self].map &p
     end
     alias _? maybe
 
-    # kleen star
+    # @ desc
+    #   kleen star
     def star &p
       self.* (0..-1), &p
     end
 
-    # look ahead
+    # @ desc
+    #   lookahead, note that other can be a very complex parser
     def & other, &p
       other = Rsec.make_parser other
       LookAhead[self, other].map p
     end
 
-    # negative look ahead
+    # @ desc
+    #   negative lookahead
     def ^ other, &p
       other = Rsec.make_parser other
       NegativeLookAhead[self, other].map p
     end
 
-    # when parsing failed, show "expect tokens" error
+    # @ desc
+    #   when parsing failed, show "expect tokens" error
     def fail *tokens, &p
       return self if tokens.empty?
       Fail[self, tokens].map p
     end
     alias expect fail
 
-    # syntax sugar for seq_(a, b)[1]
+    # @ desc
+    #   short for seq_(parser, other)[1]
     def >> other, &p
       other = Rsec.make_parser other
       left = Rsec.try_skip_pattern self
       SeqOne_[left, [other], SkipPattern[/\s*/], 1].map p
     end
 
-    # syntax sugar for seq_(a, b)[0]
+    # @ desc
+    #   short for seq_(parser, other)[0]
     def << other, &p
       other = Rsec.make_parser other
       right = Rsec.try_skip_pattern other
       SeqOne_[self, [right], SkipPattern[/\s*/], 0].map p
     end
 
-    # should be eof after parse
+    # @ desc
+    #   should be end of input after parse
     def eof &p
       Eof[self].map p
     end
 
-    # return a parser that caches parse result, may optimize performance
+    # @ desc
+    #   Packrat parser combinator, returns a parser that caches parse result, may optimize performance
     def cached &p
       Cached[self].map p
     end
@@ -283,6 +304,10 @@ module Rsec #:nodoc:
   # additional helper methods for special classes
 
   class Seq
+    # @ desc.seq, seq_
+    #   return the parse result at idx, shorter and faster than map{|array| array[idx]}
+    # @ example
+    #   assert_equal 'b', seq('a', 'b', 'c')[1].parse('abc')
     def [] idx, &p
       raise 'index out of range' if (idx >= some().size or idx < 0)
       # optimize
@@ -292,11 +317,17 @@ module Rsec #:nodoc:
       SeqOne[parsers, idx].map p
     end
 
+    # @ desc.seq, seq_, join, join.even, join.odd
+    #   if parse result contains only 1 element, return the element instead of the array
     def unbox &p
       Unbox[self].map p
     end
 
-    # think about "innerHTML"
+    # @ desc
+    #   think about "innerHTML"!
+    # @ example
+    #   parser = seq('<b>', /[\w\s]+/, '</b>').inner
+    #   parser.parse('<b>the inside</b>')
     def inner &p
       Inner[self].map p
     end
@@ -318,24 +349,24 @@ module Rsec #:nodoc:
       Unbox[self].map p
     end
 
-    # think about "innerHTML"
     def inner &p
       Inner[self].map p
     end
   end
 
   class Join
-    # if the result of join contains only 1 element, return the elem instead of array
     def unbox &p
       Unbox[self].map p
     end
 
-    # only keep the even(left, token) parts
+    # @ desc.join
+    #   only keep the even(left, token) parts
     def even &p
       JoinEven[left, Rsec.try_skip_pattern(right)].map p
     end
 
-    # only keep the odd(right, inter) parts
+    # @ desc.join
+    #   only keep the odd(right, inter) parts
     def odd &p
       JoinOdd[Rsec.try_skip_pattern(left), right].map p
     end
@@ -354,6 +385,8 @@ module Rsec #:nodoc:
   end
 
   class Pattern
+    # @ desc.r
+    #   scan until the pattern happens
     def until &p
       UntilPattern[some()].map p
     end

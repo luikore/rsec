@@ -1,3 +1,5 @@
+# coding: utf-8
+
 # config whether use c-ext
 module Rsec; end
 def use_ext yes_or_no
@@ -56,3 +58,4 @@ desc 'install gems'
 task 'gem:in' => 'gem' do
   system 'gem in *.gem --no-rdoc --no-ri'
 end
+
