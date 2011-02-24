@@ -20,26 +20,11 @@ For extreme performance under C Ruby:
 
 It is about 30% faster than Haskell Parsec in the benchmark.
 
-== Document 
+== Doc
 
-Reference
+http://rsec.heroku.com
 
-http://wiki.github.com/luikore/rsec
-
-Reference (中文 | Chinese)
-
-http://hllvm.group.javaeye.com/group/topic/17817
-
-== Links
-
-source code
+== Code
 
 http://github.com/luikore/rsec/tree/master
 
-rparsec
-
-http://docs.codehaus.org/display/JPARSEC/rparsec+tips
-
-parsec in haskell
-
-http://www.haskell.org/haskellwiki/Parsec
