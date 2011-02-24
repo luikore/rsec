@@ -1,0 +1,3 @@
+source :gemcutter
+gem 'sinatra', '1.1.2'
+gem 'slim', '0.9.0'

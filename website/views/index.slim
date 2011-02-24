@@ -1,0 +1,49 @@
+h3 What
+p
+  ' Rsec is a dynamic
+  a href="http://en.wikipedia.org/wiki/Parser_generator" parser generator
+  |  for Ruby 1.9.
+
+h3 Install
+pre.code
+  code.prettyprint.lang-sh
+    | gem in rsec
+
+h3 Use
+p
+  | Here's a simple arithmetic example:
+pre.code
+  code.prettyprint.lang-rb
+    | require "rsec"
+      include Rsec::Helpers
+      <br/># evaluate binary arithmetic series
+      calculate = proc do |(p, *ps)|
+        ps.each_slice(2).inject(p) do |left, (op, right)|
+          left.send op, right
+        end
+      end
+      <br/># build the parser
+      num    = prim(:double).fail 'number'
+      paren  = '('.r >> lazy{expr} << ')'
+      factor = num | paren
+      term   = factor.join(one_of_('*/%').fail 'operator').map &calculate
+      expr   = term.join(one_of_('+-').fail 'operator').map &calculate
+      arithmetic = expr.eof
+      <br/># test it!
+      print '1+ 2*4 = '
+      p arithmetic.parse! '1+ 2*4' #=> 9
+      print '1+ 2*/4 = '
+      p arithmetic.parse! '1+ 2*/4' #=> should raise syntax error
+ul
+  li
+    a href="/doc" Documentation for all combinators
+  li
+    a href="https://github.com/luikore/rsec/tree/master/examples" A few examples
+  li
+    a href="/tricks" Advanced topics
+  li
+    a href="http://rubydoc.info/gems/rsec/0.3/frames" Rdoc API, Maybe a little confusing
+
+h3 Code
+p
+  a href="github.com/luikore/rsec" Hosted on github.
