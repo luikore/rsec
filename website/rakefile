@@ -2,8 +2,16 @@ require "fileutils"
 require "yaml"
 include FileUtils
 
+def clone_blueprint
+  system 'git clone https://github.com/joshuaclayton/blueprint-css.git'
+end
+
 desc 'generate blueprint css'
 task 'gen:css' do
+  unless File.exist?('blueprint-css')
+    clone_blueprint
+  end
+
   path = "#{File.expand_path File.dirname(__FILE__)}/public/bp/"
   puts path
   rm_rf path

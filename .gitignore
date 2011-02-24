@@ -8,4 +8,8 @@
 *.def
 nbproject/
 ext/rsec/Makefile
-website/
+website/views/doc.slim
+website/public/bp
+website/Gemfile.lock
+website/google-code-prettify
+website/blueprint-css
