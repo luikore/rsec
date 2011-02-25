@@ -14,8 +14,8 @@ get '/' do
   slim :index
 end
 
-get '/doc' do
-  slim :doc
+get '/ref' do
+  slim :ref
 end
 
 get '/tricks' do

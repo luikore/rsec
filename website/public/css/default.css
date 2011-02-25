@@ -6,6 +6,15 @@ pre,code,tt{
 	font: 1em 'Monaco', monospace; line-height: 1.5;
 }
 
+/* layout */
+#header div a{
+	font-size:4em;
+	text-decoration:none;
+	color:black;
+	margin-left:10px;
+	display:block;
+}
+
 /* specific */
 pre.code{
 	border:1px solid #ccc;

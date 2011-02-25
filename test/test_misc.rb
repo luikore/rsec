@@ -20,6 +20,10 @@ class TestMisc < TC
     p = ''.r.eof
     asp '', p
     ase INVALID, p.parse('a')
+
+    p = seq('a', 'b').eof
+    ase INVALID, p.parse('abc')
+    ase ['a', 'b'], p.parse('ab')
   end
 
   def test_cache

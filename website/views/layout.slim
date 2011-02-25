@@ -13,26 +13,14 @@ html
     link rel="stylesheet" href="/css/default.css" type="text/css" media="screen"
 
   body
-    style type="text/css" media="screen"
-      | #header div a{font-size:4em;text-decoration:none;color:black;margin-left:10px;display:block;}
-    / hilite current
-    script type="text/javascript"
-      | $(function(){
-          var pathMatch = window.location.toString().match(/\/\w+$/)
-          pathMatch = pathMatch ? pathMatch[0] : '/'
-          $('#header a').each(function(){
-            if($(this).attr('href') === pathMatch)
-              $(this).css({'color':'#fff'})
-          })
-        })
     .container
       #header
         .span-3 style="padding-top:20px;background:#fc7;border-bottom:8px solid #ffd;"
           a href="/" Rsec
-        .span-3 style="padding-top:30px;background:#7fc;border-bottom:8px solid #cfc;"
-          a href="/doc" Doc
-        .span-3.last style="padding-top:50px;background:#a9f;border-bottom:8px solid #ccf;"
-          a href="/tricks" Tricks
+        .span-3.last style="padding-top:30px;background:#7fc;border-bottom:8px solid #cfc;"
+          a href="/ref" Ref
+        /.span-3.last style="padding-top:50px;background:#a9f;border-bottom:8px solid #ccf;"
+        /  a href="/links" Tricks
       #body style="clear:both;padding:0 10px;"
         == yield
 
