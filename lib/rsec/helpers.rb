@@ -212,7 +212,7 @@ module Rsec #:nodoc:
 
     # @ desc
     #   Repeat n or in a range.
-    #   If range.end < 0, repeat at least range.begin
+    #   If range.end &lt; 0, repeat at least range.begin
     #   (Infinity and -Infinity are considered)
     def * n, &p
       # FIXME if self is an epsilon parser, will cause infinite loop
@@ -329,8 +329,8 @@ module Rsec #:nodoc:
     # @ desc
     #   Think about "innerHTML"!
     # @ example
-    #   parser = seq('<b>', /[\w\s]+/, '</b>').inner
-    #   parser.parse('<b>the inside</b>')
+    #   parser = seq('&lt;b&gt;', /[\w\s]+/, '&lt;/b&gt;').inner
+    #   parser.parse('&lt;b&gt;the inside&lt;/b&gt;')
     def inner &p
       Inner[self].map p
     end
