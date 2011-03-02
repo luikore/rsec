@@ -52,12 +52,12 @@ module NASMManualParser
   def code_parser
     plus_cc     = /[0-9A-F][0-9A-F]\+cc/
     plus_r      = /[0-9A-F][0-9A-F]\+r/
+    hex         = /[0-9A-F][0-9A-F]/.r {|s| s.to_i 16}
     slash       = /\/[\dr]/
     imm_code    = /i[bwd]/
     reg_code    = /rw\/rd|r[bwd]/
     ref_code    = /ow\/od|o[wd]/
     prefix_code = /[oa](32|16)/
-    hex         = /[0-9A-F][0-9A-F]/.r {|s| s.to_i 16}
     code =\
       (plus_cc.r | plus_r | hex | slash |
       imm_code | reg_code | ref_code | prefix_code).join(/\s+/).even
@@ -98,7 +98,7 @@ module NASMManualParser
   end
 
   def parse_line parser, line
-    parser.parse! line
+    parser.parse! desugar line
   rescue Rsec::SyntaxError
   rescue UnSupportedError
   end
@@ -109,9 +109,9 @@ module NASMManualParser
     src = File.read filename
     src.lines.with_index do |raw_line, idx|
       line = raw_line.strip
-      # shapy
+      # this shapy shows the line is something defining an nemonic
       if line =~ /^\w+\s+[^;\[]+;\ [^;\[]+\[.+\]$/
-        if (parse_line parser, (desugar line))
+        if (parse_line parser, line)
           parsed << raw_line
         else
           puts "unparsed:#{idx}\t#{line}"
