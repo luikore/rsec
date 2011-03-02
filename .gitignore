@@ -7,6 +7,7 @@
 *.so
 *.def
 nbproject/
+examples/nasm_codes.txt
 ext/rsec/Makefile
 website/views/ref.slim
 website/public/bp

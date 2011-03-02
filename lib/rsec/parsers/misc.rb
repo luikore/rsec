@@ -115,6 +115,7 @@ module Rsec #:nodoc
   end
 
   # should be end-of-file after parsing
+  # FIXME seems parser keeps a state when using parse!, see nasm manual parse
   class Eof < Unary
     def _parse ctx
       ret = some()._parse ctx
