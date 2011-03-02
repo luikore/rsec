@@ -14,8 +14,6 @@ module Rsec #:nodoc
   class Fail < Binary
     def Fail.[] left, tokens
       # TODO mutex
-      @mask_bit ||= 0
-      @token_table ||= []
       if @mask_bit > 1000
         raise "You've created too many fail parsers, If it is your intention, call Rsec::Fail.reset when previous expect settings can be thrown away."
       end
@@ -29,6 +27,7 @@ module Rsec #:nodoc
       @mask_bit = 0
       @token_table = []
     end
+    Fail.reset
 
     def Fail.get_tokens mask
       res = []
