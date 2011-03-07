@@ -1,4 +1,9 @@
 # a markdown translator
+# 
+# The differences between this and original markdown:
+# - markdown in inline tags are not processed
+# - every line-break in non-tag parts is translated into <br/>
+# - nested list elements are not supported
 
 require "rsec"
 
