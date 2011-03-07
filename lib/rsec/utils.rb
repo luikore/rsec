@@ -92,6 +92,7 @@ module Rsec #:nodoc:
     # the text is 80 at most
     def line_text pos
       from = string.rindex "\n", pos
+      (from = string.rindex "\n", pos - 1) if from == pos
       from = from ? from + 1 : 0
       from = pos - 40 if (from < pos - 40)
 
