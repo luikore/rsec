@@ -1,7 +1,7 @@
 YAML::ENGINE.yamler = 'syck'
 Gem::Specification.new do |s|
   s.name = "rsec"
-  s.version = "0.3.5"
+  s.version = "0.3.6"
   s.author = "NS"
   s.homepage = "http://rsec.heroku.com"
   s.platform = Gem::Platform::RUBY

@@ -2,6 +2,9 @@
 #include <ruby.h>
 #include <stdio.h>
 
+#ifndef _WIN32
+#	include <errno.h>
+#endif
 
 // -----------------------------------------------------------------------------
 // globals
