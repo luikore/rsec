@@ -1,6 +1,7 @@
+YAML::ENGINE.yamler = 'syck'
 Gem::Specification.new do |s|
   s.name = "rsec-ext"
-  s.version = "0.3.3"
+  s.version = "0.3.5"
   s.author = "NS"
   s.homepage = "http://rsec.heroku.com"
   s.platform = Gem::Platform::RUBY
@@ -15,6 +16,10 @@ Gem::Specification.new do |s|
   # s.has_rdoc = false
   s.extra_rdoc_files = ["readme.rdoc"]
 
-  s.add_dependency 'rsec', ['=0.3.3']
+  s.add_dependency 'rsec', ['=0.3.5']
+
+  if s.respond_to? :specification_version
+    s.specification_version = 3
+  end
 end
 
