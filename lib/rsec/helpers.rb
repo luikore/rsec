@@ -9,7 +9,7 @@ module Rsec #:nodoc:
   module Helpers
  
     # @ desc.helper
-    #   Lazy parser
+    #   Lazy parser is constructed when parsing starts. It is useful to reference a parser not defined yet
     # @ example
     #   parser = lazy{future}
     #   future = 'jim'.r
