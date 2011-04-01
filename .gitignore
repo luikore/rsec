@@ -5,6 +5,7 @@
 *_stub.h
 *.a
 *.so
+*.bundle
 *.def
 nbproject/
 examples/nasm_codes.txt
