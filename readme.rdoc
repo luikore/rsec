@@ -14,12 +14,6 @@ The pure Ruby gem is fast enough (about 10+x faster than treetop generated code)
 
     gem in rsec
 
-For extreme performance under C Ruby:
-
-    gem in rsec-ext
-
-It is about 30% faster than Haskell Parsec in the benchmark.
-
 == Doc
 
 http://rsec.heroku.com

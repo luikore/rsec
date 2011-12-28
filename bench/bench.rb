@@ -7,7 +7,6 @@ s = '(3+24/5)/10-3*4+((82321+12-3)-3*4+(82321+12-3))/5'
 
 # rsec
 $:.unshift "#{File.dirname(__FILE__)}/../lib"
-$:.unshift "#{File.dirname(__FILE__)}/../ext"
 require "#{File.dirname(__FILE__)}/../examples/arithmetic"
 
 # treetop

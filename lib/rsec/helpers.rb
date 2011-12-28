@@ -104,7 +104,7 @@ module Rsec #:nodoc:
       parser = \
         case type
         when :double; PDouble.new sign_strategy, false # decimal
-        when :hex_double; PDouble.new sign_strategy, true # hex
+        when :hex_double; raise "Removed because Ruby 1.9.3 removed float from hex" # PDouble.new sign_strategy, true # hex
         when :int32;  PInt32.new sign_strategy, base
         when :int64;  PInt64.new sign_strategy, base
         when :unsigned_int32;
