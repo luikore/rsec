@@ -16,7 +16,7 @@ The pure Ruby gem is fast enough (about 10+x faster than treetop generated code)
 
 == Doc
 
-http://rsec.heroku.com
+http://rsec.herokuapp.com
 
 == Code
 
