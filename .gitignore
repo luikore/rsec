@@ -13,6 +13,6 @@ examples/nasm_codes.txt
 ext/rsec/Makefile
 website/views/ref.slim
 website/public/bp
-website/Gemfile.lock
 website/google-code-prettify
 website/blueprint-css
+website/.git
