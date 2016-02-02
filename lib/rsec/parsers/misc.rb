@@ -64,10 +64,9 @@ module Rsec #:nodoc
     def _parse ctx
       res = left()._parse ctx
       pos = ctx.pos
-      if INVALID[right()._parse ctx]
-        ctx.pos = pos
-        res
-      end
+      return INVALID unless INVALID[right()._parse ctx]
+      ctx.pos = pos
+      res
     end
   end
 
