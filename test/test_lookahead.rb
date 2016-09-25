@@ -13,4 +13,10 @@ class TestLookAhead < TC
     ase ['a', 'c'], p.parse('ac')
     ase INVALID, p.parse('ab')
   end
+
+  def test_negative_lookahead
+    p = 'a'.r ^ 'b'
+    ase 'a', p.parse('ac')
+    ase INVALID, p.parse('ab')
+  end
 end
