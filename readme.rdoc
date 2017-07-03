@@ -1,16 +1,14 @@
 == Parser / Regexp Combinator for Ruby. 
 
-Easier and faster than treetop / rex+racc.
+PEG grammar for Ruby, based on StringScanner. Consistently superior speed: up to 10 times faster than Treetop[https://github.com/nathansobo/treetop], and twice the speed of rex+racc.
 
-It's ruby1.9 only.
+Compatible with Ruby v1.9 and above.
 
 == License 
 
-As Ruby's
+Same license as for Ruby.
 
 == Install 
-
-The pure Ruby gem is fast enough (about 10+x faster than treetop generated code):
 
     gem in rsec
 
