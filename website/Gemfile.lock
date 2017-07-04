@@ -1,19 +1,21 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    puma (2.13.4)
-    rack (1.6.4)
-    rack-protection (1.5.3)
+    mustermann (1.0.0)
+    puma (3.9.1)
+    rack (2.0.3)
+    rack-protection (2.0.0)
       rack
-    sinatra (1.4.6)
-      rack (~> 1.4)
-      rack-protection (~> 1.4)
-      tilt (>= 1.3, < 3)
-    slim (3.0.6)
-      temple (~> 0.7.3)
+    sinatra (2.0.0)
+      mustermann (~> 1.0)
+      rack (~> 2.0)
+      rack-protection (= 2.0.0)
+      tilt (~> 2.0)
+    slim (3.0.8)
+      temple (>= 0.7.6, < 0.9)
       tilt (>= 1.3.3, < 2.1)
-    temple (0.7.6)
-    tilt (2.0.1)
+    temple (0.8.0)
+    tilt (2.0.7)
 
 PLATFORMS
   ruby
@@ -22,3 +24,6 @@ DEPENDENCIES
   puma
   sinatra
   slim
+
+BUNDLED WITH
+   1.14.6

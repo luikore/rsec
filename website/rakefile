@@ -19,7 +19,9 @@ task 'gen:css' do
 
   # cd
   cd File.dirname(__FILE__)
-  cd 'blueprint-css/lib'
+  cd 'blueprint-css'
+  system "bundle install --without test"
+  cd 'lib'
 
   # prepare config
   yaml = <<-Y
