@@ -87,7 +87,7 @@ module Rsec #:nodoc:
         raise 'Floating points does not allow :base'
       end
       base ||= 10
-      Rsec.assert_type base, Fixnum
+      Rsec.assert_type base, Integer
       unless (2..36).include? base
         raise RangeError, ":base should be in 2..36, but got #{base}"
       end
