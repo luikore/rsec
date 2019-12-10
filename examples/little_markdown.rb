@@ -65,7 +65,7 @@ class LittleMarkdown
       "<span id='#{id}'>#{text}</span>"
     }
     line = (img | link | strong | em | code | escape | id | text).star
-    line.eof.map &:join
+    line.eof.map {|parts, _| parts.join }
   end
   
   # pseudo xml tag parser, except <br> and <hr> and <script>

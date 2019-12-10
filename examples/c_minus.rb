@@ -91,7 +91,7 @@ class CMinus
     # p expr.parse! "gcd (v ,u- u/v *v)"
     expr.map{|e| Expr[e] }
   end
-    
+
   # statement parser builder, returns [stmt, block]
   def statement var_decl
     expr = expression()
@@ -114,9 +114,10 @@ class CMinus
     }
     stmt = block | if_stmt | while_stmt | return_stmt | expr_stmt
     # p if_stmt.parse! 'if(v == 0)return u;'
+    # p block.parse! '{ int x; }'
     [stmt, block]
   end
-  
+
   def initialize
     type_id = seq_(TYPE, ID).cached
     # p type_id.parse! 'int a'
@@ -137,10 +138,10 @@ class CMinus
       [ty, id, *maybe_bra]
     }
     params = param.join(COMMA).even | 'void'.r{[]}
-    brace = seq_('(', params, ')')[1]
-    fun_decl = seq_(type_id, brace, block){
-      |(type, id), params, block|
-      Function[type, id, params, block]
+    paren_args = seq_('(', params, ')')[1]
+    fun_decl = seq_(type_id, paren_args, block){|results|
+      type_id_result, params_result, block_result = results
+      Function[*type_id_result, params_result, block_result]
     }
     # p fun_decl.parse! 'int gcd(int u, int v){return 2;}'
     @program = SPACE.join(fun_decl | var_decl | EOSTMT).odd.eof

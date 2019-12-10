@@ -40,7 +40,7 @@ class SlowJSON
   end
 
   def generate_parser
-    string  = '"'.r >> chars_parser.star.map(&:join) << '"'
+    string  = '"'.r >> chars_parser.star.map{|cs, _| cs.join } << '"'
     # -? int frac? exp?
     number  = prim(:double, allowed_sign: '-')
     @value  = string | number | lazy{@object} | lazy{@array} |

@@ -42,7 +42,7 @@ module NASMManualParser
     tr_class      = 'TR3/4/5/6/7'
     classes       = (imm_class.r | memoffs_class | mem_class | reg_class | tr_class).fail 'operand class'
     reg           = reg_parser.fail 'register'
-    num           = /\d/.r(&:to_i).fail 'num'
+    num           = /\d/.r{|n, _| n.to_i }.fail 'num'
     # memoffs should be left of mem
     operand       = classes | reg | num
     operands      = operand.join('/').even.join(',').even
@@ -107,7 +107,7 @@ module NASMManualParser
     parsed = ''
     parser = instruction_parser.eof
     src = File.read filename
-    src.lines.with_index do |raw_line, idx|
+    src.lines.to_a.each_with_index do |raw_line, idx|
       line = raw_line.strip
       # this shapy shows the line is something defining an nemonic
       if line =~ /^\w+\s+[^;\[]+;\ [^;\[]+\[.+\]$/
