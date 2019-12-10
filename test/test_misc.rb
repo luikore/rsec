@@ -41,6 +41,18 @@ class TestMisc < TC
     ase 'bb', p.parse('b')
     ase INVALID, p.parse('.')
   end
+
+  def test_seq_map
+    p = seq('"'.r, /\w/.r, '"'.r).map{|(_, n, _)| n*2}
+    ase 'bb', p.parse('"b"')
+    ase INVALID, p.parse('.')
+  end
+
+  def test_seq_map_with_context
+    p = seq('"'.r, /\w/.r, '"'.r).map{|(_, n, _), ctx| n*ctx.pos}
+    ase 'bbb', p.parse('"b"')
+    ase INVALID, p.parse('.')
+  end
   
   def test_fail
     p = 'v'.r.fail 'omg!'

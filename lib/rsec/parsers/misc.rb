@@ -5,7 +5,7 @@ module Rsec #:nodoc
     def _parse ctx
       res = left()._parse ctx
       return INVALID if INVALID[res]
-      right()[res]
+      right()[res, ctx]
     end
   end
 
