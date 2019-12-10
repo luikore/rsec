@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "rsec"
-  s.version = "0.4.3"
+  s.version = "1.0.0"
   s.author = "NS"
   s.homepage = "http://rsec.herokuapp.com"
   s.platform = Gem::Platform::RUBY

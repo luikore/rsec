@@ -11,7 +11,7 @@ module Rsec
     TO_PARSER_METHOD = :r
   end
 
-  VERSION = '0.4.3'
+  VERSION = '1.0.0'
 end
 
 require "strscan"
